@@ -875,58 +875,75 @@
 
 <!-- Modal config rentabilidad -->
 <div class="modal-overlay" id="modal-config-rentabilidad">
-  <div class="modal" style="max-width:520px">
+  <div class="modal" style="max-width:540px;max-height:90vh;overflow-y:auto;">
     <div class="modal-header">
       <div class="modal-title">💡 Configurar rentabilidad</div>
       <button class="close-btn" onclick="closeModal('config-rentabilidad')">✕</button>
     </div>
     <div class="form-grid">
       <div style="background:var(--blue-soft);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--blue)">
-        Esta configuración se guarda y comparte con tu socia automáticamente.
+        💡 El <strong>inventario NO</strong> se cuenta como costo mensual — es una inversión que se va recuperando con cada venta. Solo contamos lo que realmente pagás cada mes.
       </div>
-      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-top:4px;">📦 Costos fijos mensuales (₡)</div>
+
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-top:4px;padding-bottom:4px;border-bottom:1px solid var(--border)">🏦 Préstamo</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Cuota mensual del préstamo (₡)</label>
+          <input type="number" class="form-input" id="rf-cuota-prestamo" placeholder="Ej: 100000" oninput="previewRent()">
+        </div>
+      </div>
+
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-top:4px;padding-bottom:4px;border-bottom:1px solid var(--border)">📦 Costos fijos mensuales (₡)</div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Hosting / Dominio</label>
-          <input type="number" class="form-input" id="rf-hosting" placeholder="0">
+          <input type="number" class="form-input" id="rf-hosting" placeholder="0" oninput="previewRent()">
         </div>
         <div class="form-group">
           <label class="form-label">Plataforma eCommerce</label>
-          <input type="number" class="form-input" id="rf-ecommerce" placeholder="0">
+          <input type="number" class="form-input" id="rf-ecommerce" placeholder="0" oninput="previewRent()">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Tilopay (pasarela)</label>
-          <input type="number" class="form-input" id="rf-tilopay" placeholder="0">
+          <label class="form-label">Tilopay (cuota fija)</label>
+          <input type="number" class="form-input" id="rf-tilopay" placeholder="0" oninput="previewRent()">
         </div>
         <div class="form-group">
           <label class="form-label">Publicidad (Ads/Meta)</label>
-          <input type="number" class="form-input" id="rf-publicidad" placeholder="0">
+          <input type="number" class="form-input" id="rf-publicidad" placeholder="0" oninput="previewRent()">
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Suscripciones (Make, etc.)</label>
-          <input type="number" class="form-input" id="rf-suscripciones" placeholder="0">
+          <input type="number" class="form-input" id="rf-suscripciones" placeholder="0" oninput="previewRent()">
         </div>
         <div class="form-group">
           <label class="form-label">Otros costos fijos</label>
-          <input type="number" class="form-input" id="rf-otros" placeholder="0">
+          <input type="number" class="form-input" id="rf-otros" placeholder="0" oninput="previewRent()">
         </div>
       </div>
-      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-top:4px;">📊 Margen de ganancia</div>
+
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-top:4px;padding-bottom:4px;border-bottom:1px solid var(--border)">📊 Margen de ganancia</div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Margen bruto promedio (%)</label>
-          <input type="number" class="form-input" id="rf-margen" placeholder="Ej: 30" step="0.1">
+          <input type="number" class="form-input" id="rf-margen" placeholder="Ej: 30" step="0.1" oninput="previewRent()">
+          <span style="font-size:11px;color:var(--text3)">% que ganás sobre el costo del producto</span>
         </div>
         <div class="form-group">
           <label class="form-label">% Tilopay por transacción</label>
-          <input type="number" class="form-input" id="rf-tilopay-pct" placeholder="Ej: 3.5" step="0.1">
+          <input type="number" class="form-input" id="rf-tilopay-pct" placeholder="Ej: 3.5" step="0.1" oninput="previewRent()">
+          <span style="font-size:11px;color:var(--text3)">Comisión variable sobre cada venta</span>
         </div>
       </div>
-      <div id="rf-preview" style="display:none;background:var(--gold-soft);border-radius:10px;padding:12px 16px;font-size:13px;"></div>
+
+      <!-- Preview -->
+      <div id="rf-preview" style="background:var(--gold-soft);border-radius:10px;padding:14px 16px;font-size:13px;display:none;">
+        <div style="font-weight:700;color:var(--gold);margin-bottom:8px">📊 Resumen con estos valores</div>
+        <div id="rf-preview-content"></div>
+      </div>
     </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('config-rentabilidad')">Cancelar</button>
@@ -1262,7 +1279,7 @@ let data = {
   clientes: [],
   loan: { total: 0, fecha: '', desc: '', tasa: 0, plazo: 0, tipTasa: 'mensual' },
   tc: 520,
-  rentConfig: { hosting:0, ecommerce:0, tilopay:0, publicidad:0, suscripciones:0, otros:0, margen:30, tilopayPct:3.5 }
+  rentConfig: { cuotaPrestamo:100000, hosting:0, ecommerce:0, tilopay:0, publicidad:0, suscripciones:0, otros:0, margen:30, tilopayPct:3.5 }
 };
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -1565,6 +1582,7 @@ function openModal(id) {
   }
   if (id === 'config-rentabilidad') {
     const rc = data.rentConfig;
+    document.getElementById('rf-cuota-prestamo').value = rc.cuotaPrestamo || 100000;
     document.getElementById('rf-hosting').value = rc.hosting || '';
     document.getElementById('rf-ecommerce').value = rc.ecommerce || '';
     document.getElementById('rf-tilopay').value = rc.tilopay || '';
@@ -1573,6 +1591,7 @@ function openModal(id) {
     document.getElementById('rf-otros').value = rc.otros || '';
     document.getElementById('rf-margen').value = rc.margen || 30;
     document.getElementById('rf-tilopay-pct').value = rc.tilopayPct || 3.5;
+    previewRent();
   }
   if (id === 'cliente') {
     // reset form
@@ -1991,8 +2010,36 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 });
 
 // ── RENTABILIDAD ──────────────────────────────────────
+function previewRent() {
+  const cuota   = parseFloat(document.getElementById('rf-cuota-prestamo').value) || 0;
+  const hosting = parseFloat(document.getElementById('rf-hosting').value) || 0;
+  const ecom    = parseFloat(document.getElementById('rf-ecommerce').value) || 0;
+  const tilopay = parseFloat(document.getElementById('rf-tilopay').value) || 0;
+  const pub     = parseFloat(document.getElementById('rf-publicidad').value) || 0;
+  const sus     = parseFloat(document.getElementById('rf-suscripciones').value) || 0;
+  const otros   = parseFloat(document.getElementById('rf-otros').value) || 0;
+  const margen  = parseFloat(document.getElementById('rf-margen').value) || 0;
+  const tilopayPct = parseFloat(document.getElementById('rf-tilopay-pct').value) || 0;
+  const totalFijos = cuota + hosting + ecom + tilopay + pub + sus + otros;
+  const mc = (margen/100) - (tilopayPct/100);
+  const pe = mc > 0 ? totalFijos / mc : 0;
+  const prev = document.getElementById('rf-preview');
+  if (totalFijos && margen) {
+    prev.style.display = 'block';
+    document.getElementById('rf-preview-content').innerHTML = `
+      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+        <div><div style="color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:0.8px">Total costos mensuales</div><div style="font-weight:700;font-size:16px">${fmt(totalFijos)}</div></div>
+        <div><div style="color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:0.8px">Punto de equilibrio</div><div style="font-weight:700;font-size:16px;color:var(--blue)">${fmt(Math.round(pe))}</div></div>
+        <div><div style="color:var(--text3);font-size:11px;text-transform:uppercase;letter-spacing:0.8px">Margen contribución</div><div style="font-weight:700;font-size:16px">${(mc*100).toFixed(1)}%</div></div>
+      </div>`;
+  } else {
+    prev.style.display = 'none';
+  }
+}
+
 function saveConfigRentabilidad() {
   const cfg = {
+    cuotaPrestamo: parseFloat(document.getElementById('rf-cuota-prestamo').value) || 0,
     hosting:       parseFloat(document.getElementById('rf-hosting').value) || 0,
     ecommerce:     parseFloat(document.getElementById('rf-ecommerce').value) || 0,
     tilopay:       parseFloat(document.getElementById('rf-tilopay').value) || 0,
@@ -2006,9 +2053,10 @@ function saveConfigRentabilidad() {
   closeModal('config-rentabilidad');
 }
 
-function totalCostosFijos() {
+function totalCostosMensuales() {
   const rc = data.rentConfig;
-  return (rc.hosting||0)+(rc.ecommerce||0)+(rc.tilopay||0)+(rc.publicidad||0)+(rc.suscripciones||0)+(rc.otros||0);
+  // Solo costos que se pagan SÍ O SÍ cada mes (excluye inventario)
+  return (rc.cuotaPrestamo||0)+(rc.hosting||0)+(rc.ecommerce||0)+(rc.tilopay||0)+(rc.publicidad||0)+(rc.suscripciones||0)+(rc.otros||0);
 }
 
 function renderRentabilidad() {
@@ -2016,52 +2064,56 @@ function renderRentabilidad() {
   const now = new Date();
   const mesActual = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 
-  // Ingresos y gastos del mes actual en CRC
-  const mIngAll  = data.ingresos.filter(r => r.fecha && r.fecha.startsWith(mesActual));
-  const mGasAll  = data.gastos.filter(r => r.fecha && r.fecha.startsWith(mesActual));
+  // Ingresos del mes
+  const mIngAll = data.ingresos.filter(r => r.fecha && r.fecha.startsWith(mesActual));
   const ingresos = mIngAll.reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
-  const gastos   = mGasAll.reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
 
-  // Costos fijos configurados
-  const costosFijos = totalCostosFijos();
+  // Gastos del mes — separar inventario del resto
+  const mGasAll = data.gastos.filter(r => r.fecha && r.fecha.startsWith(mesActual));
+  const gastosInventario = mGasAll.filter(r => r.cat === 'Inventario').reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
+  const gastosOperativos = mGasAll.filter(r => r.cat !== 'Inventario').reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
+
+  // Costos mensuales reales = configurados + gastos operativos registrados (sin inventario)
+  const costosMensualesConfig = totalCostosMensuales();
   const margenPct   = (rc.margen || 30) / 100;
   const tilopayPct  = (rc.tilopayPct || 3.5) / 100;
 
-  // Ganancia bruta = ingresos * margen
+  // Ganancia bruta estimada = ingresos * margen%
   const gananciaBruta = ingresos * margenPct;
-  // Comisión Tilopay variable
+  // Comisión Tilopay variable sobre ventas
   const comisionTilopay = ingresos * tilopayPct;
-  // Ganancia neta = bruta - costos fijos registrados - comisión tilopay
-  const gananciaNeta = gananciaBruta - gastos - comisionTilopay;
+  // Ganancia neta = bruta - costos mensuales configurados - gastos operativos - comisión Tilopay
+  const gananciaNeta = gananciaBruta - costosMensualesConfig - gastosOperativos - comisionTilopay;
   const margenNeto = ingresos > 0 ? (gananciaNeta / ingresos * 100) : 0;
 
-  // Punto de equilibrio: ventas necesarias para cubrir todos los costos fijos
-  // PE = CostosFijos / (margen% - tilopay%)
+  // Punto de equilibrio = costos mensuales totales / margen contribución
+  // Solo cuenta lo que debés pagar cada mes, NO el inventario
   const margenContribucion = margenPct - tilopayPct;
-  const puntoEquilibrio = margenContribucion > 0 ? (gastos + costosFijos) / margenContribucion : 0;
+  const totalObligacionesMes = costosMensualesConfig + gastosOperativos;
+  const puntoEquilibrio = margenContribucion > 0 ? totalObligacionesMes / margenContribucion : 0;
   const pctAvancePE = puntoEquilibrio > 0 ? Math.min(100, Math.round(ingresos / puntoEquilibrio * 100)) : 0;
 
   // ── SEMÁFORO ──
-  let semaforoColor, semaforoIcon, semaforoMsg, semaforoBg;
+  let sColor, sIcon, sMsg, sBg;
   if (!rc.margen) {
-    semaforoColor='var(--text3)'; semaforoIcon='⚙'; semaforoBg='var(--surface2)';
-    semaforoMsg = 'Configurá tu margen y costos fijos para ver el análisis completo.';
-  } else if (gananciaNeta > 0 && pctAvancePE >= 100) {
-    semaforoColor='var(--green)'; semaforoIcon='🟢'; semaforoBg='var(--green-soft)';
-    semaforoMsg = `¡La tienda está siendo rentable este mes! Ganancia neta estimada: ${fmt(Math.round(gananciaNeta))}.`;
+    sColor='var(--text3)'; sIcon='⚙'; sBg='var(--surface2)';
+    sMsg = 'Configurá tu margen y costos fijos para ver el análisis. Clic en "⚙ Configurar".';
+  } else if (gananciaNeta >= 0) {
+    sColor='var(--green)'; sIcon='🟢'; sBg='var(--green-soft)';
+    sMsg = `¡La tienda está siendo rentable este mes! Ganancia neta estimada: ${fmt(Math.round(gananciaNeta))}. El inventario (${fmt(Math.round(gastosInventario))}) es una inversión que seguís recuperando.`;
   } else if (pctAvancePE >= 70) {
-    semaforoColor='var(--gold)'; semaforoIcon='🟡'; semaforoBg='var(--gold-soft)';
-    semaforoMsg = `Vas bien pero aún no cubrís todos los costos. Te faltan ${fmt(Math.round(puntoEquilibrio - ingresos))} en ventas para el punto de equilibrio.`;
+    sColor='var(--gold)'; sIcon='🟡'; sBg='var(--gold-soft)';
+    sMsg = `Vas por buen camino — cubrís el ${pctAvancePE}% de tus obligaciones mensuales. Te faltan ${fmt(Math.round(puntoEquilibrio - ingresos))} en ventas para el punto de equilibrio.`;
   } else {
-    semaforoColor='var(--red)'; semaforoIcon='🔴'; semaforoBg='var(--red-soft)';
-    semaforoMsg = `La tienda está en zona de pérdida este mes. Necesitás ${fmt(Math.round(puntoEquilibrio))} en ventas para cubrir costos y solo llevás ${fmt(Math.round(ingresos))}.`;
+    sColor='var(--red)'; sIcon='🔴'; sBg='var(--red-soft)';
+    sMsg = `Las ventas aún no cubren tus obligaciones mensuales. Necesitás ${fmt(Math.round(puntoEquilibrio))} y llevás ${fmt(Math.round(ingresos))} (${pctAvancePE}%). El inventario no entra en este cálculo.`;
   }
   document.getElementById('rent-semaforo').innerHTML = `
-    <div style="background:${semaforoBg};border-radius:var(--radius);padding:18px 22px;display:flex;gap:14px;align-items:center;">
-      <span style="font-size:32px">${semaforoIcon}</span>
+    <div style="background:${sBg};border-radius:var(--radius);padding:18px 22px;display:flex;gap:14px;align-items:flex-start;">
+      <span style="font-size:32px;flex-shrink:0">${sIcon}</span>
       <div>
-        <div style="font-weight:700;font-size:15px;color:${semaforoColor};margin-bottom:4px">Estado este mes: ${semaforoIcon==='🟢'?'Rentable':semaforoIcon==='🟡'?'En camino':'En pérdida'}</div>
-        <div style="font-size:13px;color:var(--text2)">${semaforoMsg}</div>
+        <div style="font-weight:700;font-size:15px;color:${sColor};margin-bottom:4px">Estado este mes: ${sIcon==='🟢'?'Rentable':sIcon==='🟡'?'En camino':'Por mejorar'}</div>
+        <div style="font-size:13px;color:var(--text2)">${sMsg}</div>
       </div>
     </div>`;
 
@@ -2072,15 +2124,15 @@ function renderRentabilidad() {
       <div class="card-value">${fmt(Math.round(ingresos))}</div>
       <div class="card-sub">${mIngAll.length} ventas registradas</div>
     </div>
-    <div class="card ${gananciaBruta>0?'green':'red'}">
+    <div class="card ${gananciaBruta>=0?'green':'red'}">
       <div class="card-label">Ganancia bruta est.</div>
       <div class="card-value">${fmt(Math.round(gananciaBruta))}</div>
       <div class="card-sub">Margen ${rc.margen||0}% sobre ventas</div>
     </div>
     <div class="card red">
-      <div class="card-label">Total egresos</div>
-      <div class="card-value">${fmt(Math.round(gastos + comisionTilopay))}</div>
-      <div class="card-sub">Gastos + Tilopay ${fmt(Math.round(comisionTilopay))}</div>
+      <div class="card-label">Obligaciones del mes</div>
+      <div class="card-value">${fmt(Math.round(totalObligacionesMes))}</div>
+      <div class="card-sub">Préstamo + fijos + operativos</div>
     </div>
     <div class="card ${gananciaNeta>=0?'green':'red'}">
       <div class="card-label">Ganancia neta est.</div>
@@ -2089,81 +2141,106 @@ function renderRentabilidad() {
     </div>`;
 
   // ── PUNTO DE EQUILIBRIO ──
-  const faltaParaPE = Math.max(0, puntoEquilibrio - ingresos);
+  const faltaPE = Math.max(0, puntoEquilibrio - ingresos);
   document.getElementById('rent-equilibrio').innerHTML = rc.margen ? `
+    <div style="margin-bottom:16px;background:var(--blue-soft);border-radius:10px;padding:14px 16px;font-size:12px;color:var(--blue)">
+      💡 Este cálculo <strong>excluye el inventario</strong>. Solo incluye lo que debés pagar sí o sí cada mes: cuota del préstamo + costos fijos + gastos operativos.
+    </div>
     <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;">
       <div>
         <div style="font-size:13px;color:var(--text2);margin-bottom:2px">Necesitás vender</div>
-        <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--blue)">${fmt(Math.round(puntoEquilibrio))}</div>
-        <div style="font-size:12px;color:var(--text3)">para cubrir todos tus costos y empezar a ganar</div>
+        <div style="font-family:'Playfair Display',serif;font-size:32px;font-weight:700;color:var(--blue)">${fmt(Math.round(puntoEquilibrio))}</div>
+        <div style="font-size:12px;color:var(--text3)">para cubrir todas tus obligaciones mensuales</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:13px;color:var(--text2)">Llevás este mes</div>
-        <div style="font-size:20px;font-weight:700;color:${pctAvancePE>=100?'var(--green)':'var(--accent)'}">${fmt(Math.round(ingresos))} <span style="font-size:14px">(${pctAvancePE}%)</span></div>
-        ${faltaParaPE>0?`<div style="font-size:12px;color:var(--red)">Faltan ${fmt(Math.round(faltaParaPE))}</div>`:'<div style="font-size:12px;color:var(--green)">✔ Superado</div>'}
+        <div style="font-size:22px;font-weight:700;color:${pctAvancePE>=100?'var(--green)':'var(--accent)'}">${fmt(Math.round(ingresos))} <span style="font-size:14px">(${pctAvancePE}%)</span></div>
+        ${faltaPE>0?`<div style="font-size:12px;color:var(--red)">Faltan ${fmt(Math.round(faltaPE))}</div>`:'<div style="font-size:12px;color:var(--green)">✔ Punto de equilibrio superado</div>'}
       </div>
     </div>
-    <div style="background:var(--surface2);border-radius:99px;height:16px;overflow:hidden;margin-bottom:8px;">
+    <div style="background:var(--surface2);border-radius:99px;height:18px;overflow:hidden;margin-bottom:12px;">
       <div style="height:100%;border-radius:99px;background:${pctAvancePE>=100?'var(--green)':pctAvancePE>=70?'var(--gold)':'var(--accent)'};width:${pctAvancePE}%;transition:width 0.6s;"></div>
     </div>
-    <div style="display:flex;gap:24px;font-size:12px;color:var(--text3);flex-wrap:wrap;margin-top:12px;">
-      <span>🏷 Costos fijos config.: ${fmt(costosFijos)}/mes</span>
-      <span>📊 Margen contribución: ${((margenContribucion)*100).toFixed(1)}%</span>
-      <span>💳 Comisión Tilopay est.: ${fmt(Math.round(comisionTilopay))}</span>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-top:4px;">
+      <div style="background:var(--surface2);border-radius:10px;padding:10px 14px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px">Cuota préstamo</div>
+        <div style="font-weight:700">${fmt(rc.cuotaPrestamo||0)}</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:10px 14px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px">Costos fijos config.</div>
+        <div style="font-weight:700">${fmt(costosMensualesConfig - (rc.cuotaPrestamo||0))}</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:10px 14px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px">Gastos operativos</div>
+        <div style="font-weight:700">${fmt(Math.round(gastosOperativos))}</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:10px 14px;">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px">Inventario (aparte)</div>
+        <div style="font-weight:700;color:var(--text3)">${fmt(Math.round(gastosInventario))}</div>
+      </div>
     </div>` :
-    `<div class="empty-state"><div class="empty-icon">⚙</div><div class="empty-msg">Configurá tu margen primero usando el botón "Configurar" arriba</div></div>`;
+    `<div class="empty-state"><div class="empty-icon">⚙</div><div class="empty-msg">Configurá tu margen usando el botón "⚙ Configurar" arriba</div></div>`;
 
   // ── COMPARATIVO MES A MES ──
   const allDates = [...data.ingresos.map(r=>r.fecha),...data.gastos.map(r=>r.fecha)].filter(Boolean);
   const meses = [...new Set(allDates.map(d=>d.substring(0,7)))].sort().reverse().slice(0,6);
   document.getElementById('rent-comparativo').innerHTML = meses.length ? `
     <table class="data-table">
-      <thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>G. Bruta est.</th><th>G. Neta est.</th><th>Margen %</th><th>Estado</th></tr></thead>
+      <thead><tr><th>Mes</th><th>Ingresos</th><th>Obligaciones</th><th>Inventario</th><th>G. Bruta est.</th><th>G. Neta est.</th><th>Estado</th></tr></thead>
       <tbody>
         ${meses.map(ym => {
           const [y,m] = ym.split('-');
           const mIng = data.ingresos.filter(r=>r.fecha&&r.fecha.startsWith(ym)).reduce((s,r)=>s+toCRC(r.monto,r.moneda),0);
-          const mGas = data.gastos.filter(r=>r.fecha&&r.fecha.startsWith(ym)).reduce((s,r)=>s+toCRC(r.monto,r.moneda),0);
+          const mGasOp = data.gastos.filter(r=>r.fecha&&r.fecha.startsWith(ym)&&r.cat!=='Inventario').reduce((s,r)=>s+toCRC(r.monto,r.moneda),0);
+          const mGasInv = data.gastos.filter(r=>r.fecha&&r.fecha.startsWith(ym)&&r.cat==='Inventario').reduce((s,r)=>s+toCRC(r.monto,r.moneda),0);
+          const mOblig = costosMensualesConfig + mGasOp;
           const mBruta = mIng * margenPct;
           const mTilopay = mIng * tilopayPct;
-          const mNeta = mBruta - mGas - mTilopay;
-          const mPct = mIng>0?(mNeta/mIng*100):0;
-          const ok = mNeta>=0;
+          const mNeta = mBruta - mOblig - mTilopay;
+          const ok = mNeta >= 0;
           return `<tr>
             <td><strong>${MONTHS[parseInt(m)-1]} ${y}</strong></td>
             <td style="color:var(--green);font-weight:600">${fmt(Math.round(mIng))}</td>
-            <td style="color:var(--red)">${fmt(Math.round(mGas))}</td>
+            <td style="color:var(--red)">${fmt(Math.round(mOblig))}</td>
+            <td style="color:var(--text3)">${fmt(Math.round(mGasInv))}</td>
             <td>${fmt(Math.round(mBruta))}</td>
             <td style="color:${ok?'var(--green)':'var(--red)'};font-weight:700">${fmt(Math.round(mNeta))}</td>
-            <td style="color:${ok?'var(--green)':'var(--red)'}">${mPct.toFixed(1)}%</td>
-            <td>${ok?'<span class="badge badge-green">✔ Rentable</span>':'<span class="badge badge-red">✗ Pérdida</span>'}</td>
+            <td>${ok?'<span class="badge badge-green">✔ Rentable</span>':'<span class="badge badge-red">✗ Por mejorar</span>'}</td>
           </tr>`;
         }).join('')}
       </tbody>
     </table>` :
     `<div class="empty-state" style="padding:40px"><div class="empty-icon">📅</div><div class="empty-msg">Registrá ingresos y gastos para ver la comparativa</div></div>`;
 
-  // ── CATEGORÍAS DE GASTO ──
+  // ── QUÉ ME ESTÁ COMIENDO MÁS ──
   document.getElementById('rent-mes-label').textContent = MONTHS[now.getMonth()] + ' ' + now.getFullYear();
   const gasCats = {};
+  // Gastos registrados este mes
   mGasAll.forEach(r => { gasCats[r.cat] = (gasCats[r.cat]||0) + toCRC(r.monto, r.moneda); });
-  // Agregar costos fijos configurados
-  const cfNames = { hosting:'Hosting/Dominio', ecommerce:'eCommerce', tilopay:'Tilopay (fijo)', publicidad:'Publicidad', suscripciones:'Suscripciones', otros:'Otros fijos' };
-  Object.entries(cfNames).forEach(([k,label]) => {
-    if (rc[k]) gasCats[label] = (gasCats[label]||0) + rc[k];
-  });
+  // Costos configurados (mostrar aparte del inventario)
+  const cfMap = {
+    'Cuota préstamo': rc.cuotaPrestamo||0,
+    'Hosting/Dominio': rc.hosting||0,
+    'eCommerce': rc.ecommerce||0,
+    'Tilopay (fijo)': rc.tilopay||0,
+    'Publicidad': rc.publicidad||0,
+    'Suscripciones': rc.suscripciones||0,
+    'Otros fijos': rc.otros||0
+  };
+  Object.entries(cfMap).forEach(([k,v]) => { if(v) gasCats[k] = (gasCats[k]||0) + v; });
   const totalGasAll = Object.values(gasCats).reduce((s,v)=>s+v,0);
   const sorted = Object.entries(gasCats).sort((a,b)=>b[1]-a[1]);
-  const barColors = ['var(--accent)','var(--blue)','var(--gold)','var(--green)','#9b59b6','#1abc9c','#e67e22'];
+  const barColors = ['var(--accent)','var(--blue)','var(--gold)','var(--green)','#9b59b6','#1abc9c','#e67e22','#e74c3c'];
   document.getElementById('rent-categorias').innerHTML = sorted.length ? sorted.map(([cat,val],i) => {
     const pct = totalGasAll>0?Math.round(val/totalGasAll*100):0;
-    return `<div style="margin-bottom:14px;">
+    const esInv = cat === 'Inventario';
+    return `<div style="margin-bottom:14px;${esInv?'opacity:0.6':''}">
       <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
-        <span style="font-weight:600">${cat}</span>
+        <span style="font-weight:600">${cat}${esInv?' <span style="font-size:10px;color:var(--text3)">(inversión, no gasto mensual)</span>':''}</span>
         <span>${fmt(Math.round(val))} <span style="color:var(--text3)">(${pct}%)</span></span>
       </div>
       <div style="background:var(--surface2);border-radius:99px;height:10px;overflow:hidden;">
-        <div style="height:100%;border-radius:99px;background:${barColors[i%barColors.length]};width:${pct}%;transition:width 0.5s;"></div>
+        <div style="height:100%;border-radius:99px;background:${esInv?'var(--text3)':barColors[i%barColors.length]};width:${pct}%;transition:width 0.5s;"></div>
       </div>
     </div>`;
   }).join('') : `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-msg">Sin gastos registrados este mes</div></div>`;
