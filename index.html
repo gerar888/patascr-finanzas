@@ -593,6 +593,9 @@
     <div class="nav-item" onclick="showPage('reportes')">
       <span class="nav-icon">📋</span> Reportes
     </div>
+    <div class="nav-item" onclick="showPage('rentabilidad')">
+      <span class="nav-icon">💡</span> Rentabilidad
+    </div>
     <div class="nav-section">Clientes</div>
     <div class="nav-item" onclick="showPage('clientes')">
       <span class="nav-icon">🐾</span> Clientes
@@ -820,12 +823,119 @@
       <!-- Lista de clientes -->
       <div id="clientes-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:8px;"></div>
     </div>
+
+    <!-- RENTABILIDAD -->
+    <div class="page" id="page-rentabilidad">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Rentabilidad</div>
+          <div class="page-subtitle">¿La tienda está ganando o perdiendo?</div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <button class="btn btn-ghost" onclick="openModal('config-rentabilidad')">⚙ Configurar</button>
+        </div>
+      </div>
+
+      <!-- Semáforo general -->
+      <div id="rent-semaforo" style="margin-bottom:24px;"></div>
+
+      <!-- Cards principales -->
+      <div class="cards-grid" style="margin-bottom:24px;" id="rent-cards"></div>
+
+      <!-- Punto de equilibrio -->
+      <div class="section-box" style="margin-bottom:20px;">
+        <div class="section-box-header">
+          <div class="section-box-title">⚖️ Punto de equilibrio</div>
+          <span style="font-size:12px;color:var(--text3)">¿Cuánto necesitás vender para no perder?</span>
+        </div>
+        <div id="rent-equilibrio" style="padding:20px;"></div>
+      </div>
+
+      <!-- Comparativo mes a mes -->
+      <div class="section-box" style="margin-bottom:20px;">
+        <div class="section-box-header">
+          <div class="section-box-title">📅 Comparativo mes a mes</div>
+        </div>
+        <div id="rent-comparativo" style="padding:0;"></div>
+      </div>
+
+      <!-- Gastos por categoría -->
+      <div class="section-box">
+        <div class="section-box-header">
+          <div class="section-box-title">🍕 ¿Qué me está comiendo más?</div>
+          <span style="font-size:12px;color:var(--text3)" id="rent-mes-label"></span>
+        </div>
+        <div id="rent-categorias" style="padding:20px;"></div>
+      </div>
+    </div>
   </main>
 </div>
 
 <!-- MODALES -->
 
-<!-- Modal cliente -->
+<!-- Modal config rentabilidad -->
+<div class="modal-overlay" id="modal-config-rentabilidad">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">💡 Configurar rentabilidad</div>
+      <button class="close-btn" onclick="closeModal('config-rentabilidad')">✕</button>
+    </div>
+    <div class="form-grid">
+      <div style="background:var(--blue-soft);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--blue)">
+        Esta configuración se guarda y comparte con tu socia automáticamente.
+      </div>
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-top:4px;">📦 Costos fijos mensuales (₡)</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Hosting / Dominio</label>
+          <input type="number" class="form-input" id="rf-hosting" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Plataforma eCommerce</label>
+          <input type="number" class="form-input" id="rf-ecommerce" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Tilopay (pasarela)</label>
+          <input type="number" class="form-input" id="rf-tilopay" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Publicidad (Ads/Meta)</label>
+          <input type="number" class="form-input" id="rf-publicidad" placeholder="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Suscripciones (Make, etc.)</label>
+          <input type="number" class="form-input" id="rf-suscripciones" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Otros costos fijos</label>
+          <input type="number" class="form-input" id="rf-otros" placeholder="0">
+        </div>
+      </div>
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-top:4px;">📊 Margen de ganancia</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Margen bruto promedio (%)</label>
+          <input type="number" class="form-input" id="rf-margen" placeholder="Ej: 30" step="0.1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">% Tilopay por transacción</label>
+          <input type="number" class="form-input" id="rf-tilopay-pct" placeholder="Ej: 3.5" step="0.1">
+        </div>
+      </div>
+      <div id="rf-preview" style="display:none;background:var(--gold-soft);border-radius:10px;padding:12px 16px;font-size:13px;"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('config-rentabilidad')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveConfigRentabilidad()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+
 <div class="modal-overlay" id="modal-cliente">
   <div class="modal" style="max-width:520px">
     <div class="modal-header">
@@ -1151,7 +1261,8 @@ let data = {
   pagos: [],
   clientes: [],
   loan: { total: 0, fecha: '', desc: '', tasa: 0, plazo: 0, tipTasa: 'mensual' },
-  tc: 520  // Tipo de cambio ₡ por $1 USD — actualizable
+  tc: 520,
+  rentConfig: { hosting:0, ecommerce:0, tilopay:0, publicidad:0, suscripciones:0, otros:0, margen:30, tilopayPct:3.5 }
 };
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -1201,13 +1312,14 @@ function startPolling() {
 
 async function syncFromDB() {
   try {
-    const [ing, gas, pag, loan, tc, cli] = await Promise.all([
+    const [ing, gas, pag, loan, tc, cli, rentCfg] = await Promise.all([
       fbGet('ingresos'),
       fbGet('gastos'),
       fbGet('pagos'),
       fbGet('loan'),
       fbGet('tc'),
-      fbGet('clientes')
+      fbGet('clientes'),
+      fbGet('rentConfig')
     ]);
     data.ingresos = ing  ? Object.values(ing).sort((a,b) => b.id - a.id)  : [];
     data.gastos   = gas  ? Object.values(gas).sort((a,b) => b.id - a.id)  : [];
@@ -1215,6 +1327,7 @@ async function syncFromDB() {
     data.clientes = cli  ? Object.values(cli).sort((a,b) => a.nombre?.localeCompare(b.nombre)) : [];
     if (loan) data.loan = loan;
     if (tc && tc.valor) data.tc = tc.valor;
+    if (rentCfg) data.rentConfig = rentCfg;
     updateTCBadge();
     setSyncStatus(true);
     refresh();
@@ -1262,6 +1375,10 @@ async function saveTCDB(valor) {
 async function saveClienteDB(record) {
   try { await fbPut('clientes/' + record.id, record); syncFromDB(); }
   catch(e) { showNotif('⚠ Error al guardar cliente: ' + e.message); }
+}
+async function saveRentConfigDB(cfg) {
+  try { await fbPut('rentConfig', cfg); data.rentConfig = cfg; showNotif('✅ Configuración guardada'); refresh(); }
+  catch(e) { showNotif('⚠ Error al guardar: ' + e.message); }
 }
 
 // Convierte cualquier monto a CRC según su moneda
@@ -1383,7 +1500,7 @@ function showPage(id) {
   refresh();
 }
 function pageName(id) {
-  const m = { dashboard:'Dashboard', ingresos:'Ingresos', gastos:'Gastos', prestamo:'Préstamo', reportes:'Reportes', clientes:'Clientes' };
+  const m = { dashboard:'Dashboard', ingresos:'Ingresos', gastos:'Gastos', prestamo:'Préstamo', reportes:'Reportes', clientes:'Clientes', rentabilidad:'Rentabilidad' };
   return m[id] || '';
 }
 
@@ -1445,6 +1562,17 @@ function openModal(id) {
     } else {
       info.style.display = 'none';
     }
+  }
+  if (id === 'config-rentabilidad') {
+    const rc = data.rentConfig;
+    document.getElementById('rf-hosting').value = rc.hosting || '';
+    document.getElementById('rf-ecommerce').value = rc.ecommerce || '';
+    document.getElementById('rf-tilopay').value = rc.tilopay || '';
+    document.getElementById('rf-publicidad').value = rc.publicidad || '';
+    document.getElementById('rf-suscripciones').value = rc.suscripciones || '';
+    document.getElementById('rf-otros').value = rc.otros || '';
+    document.getElementById('rf-margen').value = rc.margen || 30;
+    document.getElementById('rf-tilopay-pct').value = rc.tilopayPct || 3.5;
   }
   if (id === 'cliente') {
     // reset form
@@ -1849,6 +1977,7 @@ function refresh() {
   if (id === 'prestamo') renderPrestamo();
   if (id === 'reportes') renderReportes();
   if (id === 'clientes') renderClientes();
+  if (id === 'rentabilidad') renderRentabilidad();
 }
 
 // ── CLOSE ON OVERLAY CLICK ────────────────────────────
@@ -1860,6 +1989,185 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
     }
   });
 });
+
+// ── RENTABILIDAD ──────────────────────────────────────
+function saveConfigRentabilidad() {
+  const cfg = {
+    hosting:       parseFloat(document.getElementById('rf-hosting').value) || 0,
+    ecommerce:     parseFloat(document.getElementById('rf-ecommerce').value) || 0,
+    tilopay:       parseFloat(document.getElementById('rf-tilopay').value) || 0,
+    publicidad:    parseFloat(document.getElementById('rf-publicidad').value) || 0,
+    suscripciones: parseFloat(document.getElementById('rf-suscripciones').value) || 0,
+    otros:         parseFloat(document.getElementById('rf-otros').value) || 0,
+    margen:        parseFloat(document.getElementById('rf-margen').value) || 30,
+    tilopayPct:    parseFloat(document.getElementById('rf-tilopay-pct').value) || 3.5,
+  };
+  saveRentConfigDB(cfg);
+  closeModal('config-rentabilidad');
+}
+
+function totalCostosFijos() {
+  const rc = data.rentConfig;
+  return (rc.hosting||0)+(rc.ecommerce||0)+(rc.tilopay||0)+(rc.publicidad||0)+(rc.suscripciones||0)+(rc.otros||0);
+}
+
+function renderRentabilidad() {
+  const rc = data.rentConfig;
+  const now = new Date();
+  const mesActual = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+
+  // Ingresos y gastos del mes actual en CRC
+  const mIngAll  = data.ingresos.filter(r => r.fecha && r.fecha.startsWith(mesActual));
+  const mGasAll  = data.gastos.filter(r => r.fecha && r.fecha.startsWith(mesActual));
+  const ingresos = mIngAll.reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
+  const gastos   = mGasAll.reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
+
+  // Costos fijos configurados
+  const costosFijos = totalCostosFijos();
+  const margenPct   = (rc.margen || 30) / 100;
+  const tilopayPct  = (rc.tilopayPct || 3.5) / 100;
+
+  // Ganancia bruta = ingresos * margen
+  const gananciaBruta = ingresos * margenPct;
+  // Comisión Tilopay variable
+  const comisionTilopay = ingresos * tilopayPct;
+  // Ganancia neta = bruta - costos fijos registrados - comisión tilopay
+  const gananciaNeta = gananciaBruta - gastos - comisionTilopay;
+  const margenNeto = ingresos > 0 ? (gananciaNeta / ingresos * 100) : 0;
+
+  // Punto de equilibrio: ventas necesarias para cubrir todos los costos fijos
+  // PE = CostosFijos / (margen% - tilopay%)
+  const margenContribucion = margenPct - tilopayPct;
+  const puntoEquilibrio = margenContribucion > 0 ? (gastos + costosFijos) / margenContribucion : 0;
+  const pctAvancePE = puntoEquilibrio > 0 ? Math.min(100, Math.round(ingresos / puntoEquilibrio * 100)) : 0;
+
+  // ── SEMÁFORO ──
+  let semaforoColor, semaforoIcon, semaforoMsg, semaforoBg;
+  if (!rc.margen) {
+    semaforoColor='var(--text3)'; semaforoIcon='⚙'; semaforoBg='var(--surface2)';
+    semaforoMsg = 'Configurá tu margen y costos fijos para ver el análisis completo.';
+  } else if (gananciaNeta > 0 && pctAvancePE >= 100) {
+    semaforoColor='var(--green)'; semaforoIcon='🟢'; semaforoBg='var(--green-soft)';
+    semaforoMsg = `¡La tienda está siendo rentable este mes! Ganancia neta estimada: ${fmt(Math.round(gananciaNeta))}.`;
+  } else if (pctAvancePE >= 70) {
+    semaforoColor='var(--gold)'; semaforoIcon='🟡'; semaforoBg='var(--gold-soft)';
+    semaforoMsg = `Vas bien pero aún no cubrís todos los costos. Te faltan ${fmt(Math.round(puntoEquilibrio - ingresos))} en ventas para el punto de equilibrio.`;
+  } else {
+    semaforoColor='var(--red)'; semaforoIcon='🔴'; semaforoBg='var(--red-soft)';
+    semaforoMsg = `La tienda está en zona de pérdida este mes. Necesitás ${fmt(Math.round(puntoEquilibrio))} en ventas para cubrir costos y solo llevás ${fmt(Math.round(ingresos))}.`;
+  }
+  document.getElementById('rent-semaforo').innerHTML = `
+    <div style="background:${semaforoBg};border-radius:var(--radius);padding:18px 22px;display:flex;gap:14px;align-items:center;">
+      <span style="font-size:32px">${semaforoIcon}</span>
+      <div>
+        <div style="font-weight:700;font-size:15px;color:${semaforoColor};margin-bottom:4px">Estado este mes: ${semaforoIcon==='🟢'?'Rentable':semaforoIcon==='🟡'?'En camino':'En pérdida'}</div>
+        <div style="font-size:13px;color:var(--text2)">${semaforoMsg}</div>
+      </div>
+    </div>`;
+
+  // ── CARDS ──
+  document.getElementById('rent-cards').innerHTML = `
+    <div class="card green">
+      <div class="card-label">Ingresos del mes</div>
+      <div class="card-value">${fmt(Math.round(ingresos))}</div>
+      <div class="card-sub">${mIngAll.length} ventas registradas</div>
+    </div>
+    <div class="card ${gananciaBruta>0?'green':'red'}">
+      <div class="card-label">Ganancia bruta est.</div>
+      <div class="card-value">${fmt(Math.round(gananciaBruta))}</div>
+      <div class="card-sub">Margen ${rc.margen||0}% sobre ventas</div>
+    </div>
+    <div class="card red">
+      <div class="card-label">Total egresos</div>
+      <div class="card-value">${fmt(Math.round(gastos + comisionTilopay))}</div>
+      <div class="card-sub">Gastos + Tilopay ${fmt(Math.round(comisionTilopay))}</div>
+    </div>
+    <div class="card ${gananciaNeta>=0?'green':'red'}">
+      <div class="card-label">Ganancia neta est.</div>
+      <div class="card-value">${fmt(Math.round(gananciaNeta))}</div>
+      <div class="card-sub">Margen neto ${margenNeto.toFixed(1)}%</div>
+    </div>`;
+
+  // ── PUNTO DE EQUILIBRIO ──
+  const faltaParaPE = Math.max(0, puntoEquilibrio - ingresos);
+  document.getElementById('rent-equilibrio').innerHTML = rc.margen ? `
+    <div style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:2px">Necesitás vender</div>
+        <div style="font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--blue)">${fmt(Math.round(puntoEquilibrio))}</div>
+        <div style="font-size:12px;color:var(--text3)">para cubrir todos tus costos y empezar a ganar</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:13px;color:var(--text2)">Llevás este mes</div>
+        <div style="font-size:20px;font-weight:700;color:${pctAvancePE>=100?'var(--green)':'var(--accent)'}">${fmt(Math.round(ingresos))} <span style="font-size:14px">(${pctAvancePE}%)</span></div>
+        ${faltaParaPE>0?`<div style="font-size:12px;color:var(--red)">Faltan ${fmt(Math.round(faltaParaPE))}</div>`:'<div style="font-size:12px;color:var(--green)">✔ Superado</div>'}
+      </div>
+    </div>
+    <div style="background:var(--surface2);border-radius:99px;height:16px;overflow:hidden;margin-bottom:8px;">
+      <div style="height:100%;border-radius:99px;background:${pctAvancePE>=100?'var(--green)':pctAvancePE>=70?'var(--gold)':'var(--accent)'};width:${pctAvancePE}%;transition:width 0.6s;"></div>
+    </div>
+    <div style="display:flex;gap:24px;font-size:12px;color:var(--text3);flex-wrap:wrap;margin-top:12px;">
+      <span>🏷 Costos fijos config.: ${fmt(costosFijos)}/mes</span>
+      <span>📊 Margen contribución: ${((margenContribucion)*100).toFixed(1)}%</span>
+      <span>💳 Comisión Tilopay est.: ${fmt(Math.round(comisionTilopay))}</span>
+    </div>` :
+    `<div class="empty-state"><div class="empty-icon">⚙</div><div class="empty-msg">Configurá tu margen primero usando el botón "Configurar" arriba</div></div>`;
+
+  // ── COMPARATIVO MES A MES ──
+  const allDates = [...data.ingresos.map(r=>r.fecha),...data.gastos.map(r=>r.fecha)].filter(Boolean);
+  const meses = [...new Set(allDates.map(d=>d.substring(0,7)))].sort().reverse().slice(0,6);
+  document.getElementById('rent-comparativo').innerHTML = meses.length ? `
+    <table class="data-table">
+      <thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>G. Bruta est.</th><th>G. Neta est.</th><th>Margen %</th><th>Estado</th></tr></thead>
+      <tbody>
+        ${meses.map(ym => {
+          const [y,m] = ym.split('-');
+          const mIng = data.ingresos.filter(r=>r.fecha&&r.fecha.startsWith(ym)).reduce((s,r)=>s+toCRC(r.monto,r.moneda),0);
+          const mGas = data.gastos.filter(r=>r.fecha&&r.fecha.startsWith(ym)).reduce((s,r)=>s+toCRC(r.monto,r.moneda),0);
+          const mBruta = mIng * margenPct;
+          const mTilopay = mIng * tilopayPct;
+          const mNeta = mBruta - mGas - mTilopay;
+          const mPct = mIng>0?(mNeta/mIng*100):0;
+          const ok = mNeta>=0;
+          return `<tr>
+            <td><strong>${MONTHS[parseInt(m)-1]} ${y}</strong></td>
+            <td style="color:var(--green);font-weight:600">${fmt(Math.round(mIng))}</td>
+            <td style="color:var(--red)">${fmt(Math.round(mGas))}</td>
+            <td>${fmt(Math.round(mBruta))}</td>
+            <td style="color:${ok?'var(--green)':'var(--red)'};font-weight:700">${fmt(Math.round(mNeta))}</td>
+            <td style="color:${ok?'var(--green)':'var(--red)'}">${mPct.toFixed(1)}%</td>
+            <td>${ok?'<span class="badge badge-green">✔ Rentable</span>':'<span class="badge badge-red">✗ Pérdida</span>'}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>` :
+    `<div class="empty-state" style="padding:40px"><div class="empty-icon">📅</div><div class="empty-msg">Registrá ingresos y gastos para ver la comparativa</div></div>`;
+
+  // ── CATEGORÍAS DE GASTO ──
+  document.getElementById('rent-mes-label').textContent = MONTHS[now.getMonth()] + ' ' + now.getFullYear();
+  const gasCats = {};
+  mGasAll.forEach(r => { gasCats[r.cat] = (gasCats[r.cat]||0) + toCRC(r.monto, r.moneda); });
+  // Agregar costos fijos configurados
+  const cfNames = { hosting:'Hosting/Dominio', ecommerce:'eCommerce', tilopay:'Tilopay (fijo)', publicidad:'Publicidad', suscripciones:'Suscripciones', otros:'Otros fijos' };
+  Object.entries(cfNames).forEach(([k,label]) => {
+    if (rc[k]) gasCats[label] = (gasCats[label]||0) + rc[k];
+  });
+  const totalGasAll = Object.values(gasCats).reduce((s,v)=>s+v,0);
+  const sorted = Object.entries(gasCats).sort((a,b)=>b[1]-a[1]);
+  const barColors = ['var(--accent)','var(--blue)','var(--gold)','var(--green)','#9b59b6','#1abc9c','#e67e22'];
+  document.getElementById('rent-categorias').innerHTML = sorted.length ? sorted.map(([cat,val],i) => {
+    const pct = totalGasAll>0?Math.round(val/totalGasAll*100):0;
+    return `<div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+        <span style="font-weight:600">${cat}</span>
+        <span>${fmt(Math.round(val))} <span style="color:var(--text3)">(${pct}%)</span></span>
+      </div>
+      <div style="background:var(--surface2);border-radius:99px;height:10px;overflow:hidden;">
+        <div style="height:100%;border-radius:99px;background:${barColors[i%barColors.length]};width:${pct}%;transition:width 0.5s;"></div>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty-state"><div class="empty-icon">📊</div><div class="empty-msg">Sin gastos registrados este mes</div></div>`;
+}
 
 // ── CLIENTES ──────────────────────────────────────────
 let editingClienteId = null;
