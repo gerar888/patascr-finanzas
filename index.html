@@ -617,7 +617,7 @@
         </div>
       </div>
 
-      <div class="cards-grid">
+      <div class="cards-grid" style="grid-template-columns:repeat(5,1fr);">
         <div class="card green">
           <div class="card-label">Ingresos del mes</div>
           <div class="card-value" id="dashIngresos">₡0</div>
@@ -629,12 +629,17 @@
           <div class="card-sub" id="dashGastosCount">0 registros</div>
         </div>
         <div class="card gold">
-          <div class="card-label">Balance neto</div>
+          <div class="card-label">Balance neto del mes</div>
           <div class="card-value" id="dashBalance">₡0</div>
           <div class="card-sub" id="dashBalanceNote">—</div>
         </div>
+        <div class="card green" id="dashCuentaCard">
+          <div class="card-label">💰 Saldo en cuenta</div>
+          <div class="card-value" id="dashCuenta">₡0</div>
+          <div class="card-sub" id="dashCuentaNote">Depositado ± movimientos</div>
+        </div>
         <div class="card blue">
-          <div class="card-label">Saldo préstamo</div>
+          <div class="card-label">🏦 Saldo préstamo</div>
           <div class="card-value" id="dashPrestamo">₡0</div>
           <div class="card-sub" id="dashPrestamoNote">pendiente</div>
         </div>
@@ -742,7 +747,8 @@
           <div class="loan-progress-fill" id="loanProgress" style="width:0%"></div>
         </div>
         <div class="loan-stats">
-          <div><div class="loan-stat-label">Monto original</div><div class="loan-stat-value" id="loanOriginal">₡0</div></div>
+          <div><div class="loan-stat-label">Monto aprobado</div><div class="loan-stat-value" id="loanOriginal">₡0</div></div>
+          <div><div class="loan-stat-label">Monto depositado</div><div class="loan-stat-value" id="loanDepositado">₡0</div></div>
           <div><div class="loan-stat-label">Capital pagado</div><div class="loan-stat-value" id="loanPagado">₡0</div></div>
           <div><div class="loan-stat-label">Intereses pagados</div><div class="loan-stat-value" id="loanIntereses">₡0</div></div>
           <div><div class="loan-stat-label">Cuota mensual</div><div class="loan-stat-value" id="loanCuota">₡0</div></div>
@@ -756,7 +762,7 @@
           <div class="section-box-header">
             <div class="section-box-title">📄 Condiciones del préstamo</div>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;padding:0" id="loanCondBody"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0;padding:0" id="loanCondBody"></div>
         </div>
       </div>
 
@@ -1153,15 +1159,25 @@
       <button class="close-btn" onclick="closeModal('config-prestamo')">✕</button>
     </div>
     <div class="form-grid">
+      <div style="background:var(--blue-soft);border-radius:10px;padding:12px 16px;font-size:13px;color:var(--blue)">
+        El <strong>monto aprobado</strong> es lo que el banco te prestó. El <strong>monto depositado</strong> es lo que realmente llegó a tu cuenta (después de seguros, comisiones, etc.). El saldo en cuenta parte de ese monto depositado.
+      </div>
       <div class="form-group">
         <label class="form-label">Descripción / Entidad</label>
-        <input type="text" class="form-input" id="loan-desc" placeholder="Ej: Banco Nacional - préstamo personal">
+        <input type="text" class="form-input" id="loan-desc" placeholder="Ej: Banco Popular - préstamo personal">
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Monto del préstamo (₡)</label>
+          <label class="form-label">Monto aprobado por el banco (₡)</label>
           <input type="number" class="form-input" id="loan-total" placeholder="0" oninput="previewCuota()">
         </div>
+        <div class="form-group">
+          <label class="form-label">Monto real depositado (₡)</label>
+          <input type="number" class="form-input" id="loan-depositado" placeholder="0">
+          <span style="font-size:11px;color:var(--text3)">Lo que llegó a tu cuenta</span>
+        </div>
+      </div>
+      <div class="form-row">
         <div class="form-group">
           <label class="form-label">Fecha de inicio</label>
           <input type="date" class="form-input" id="loan-fecha">
@@ -1277,7 +1293,7 @@ let data = {
   gastos: [],
   pagos: [],
   clientes: [],
-  loan: { total: 0, fecha: '', desc: '', tasa: 0, plazo: 0, tipTasa: 'mensual' },
+  loan: { total: 0, depositado: 0, fecha: '', desc: '', tasa: 0, plazo: 0, tipTasa: 'mensual' },
   tc: 520,
   rentConfig: { cuotaPrestamo:100000, hosting:0, ecommerce:0, tilopay:0, publicidad:0, suscripciones:0, otros:0, margen:30, tilopayPct:3.5 }
 };
@@ -1608,6 +1624,7 @@ function openModal(id) {
   }
   if (id === 'config-prestamo') {
     document.getElementById('loan-total').value = data.loan.total || '';
+    document.getElementById('loan-depositado').value = data.loan.depositado || '';
     document.getElementById('loan-fecha').value = data.loan.fecha || today();
     document.getElementById('loan-desc').value = data.loan.desc || '';
     document.getElementById('loan-tasa').value = data.loan.tasa || '';
@@ -1661,15 +1678,16 @@ function saveTC() {
 }
 
 function saveLoanConfig() {
-  const total = parseFloat(document.getElementById('loan-total').value);
-  const fecha = document.getElementById('loan-fecha').value;
-  const desc = document.getElementById('loan-desc').value.trim();
-  const tasa = parseFloat(document.getElementById('loan-tasa').value);
-  const plazo = parseInt(document.getElementById('loan-plazo').value);
-  const tipTasa = document.getElementById('loan-tipTasa').value;
+  const total      = parseFloat(document.getElementById('loan-total').value);
+  const depositado = parseFloat(document.getElementById('loan-depositado').value) || 0;
+  const fecha      = document.getElementById('loan-fecha').value;
+  const desc       = document.getElementById('loan-desc').value.trim();
+  const tasa       = parseFloat(document.getElementById('loan-tasa').value);
+  const plazo      = parseInt(document.getElementById('loan-plazo').value);
+  const tipTasa    = document.getElementById('loan-tipTasa').value;
   if (!total) { showNotif('⚠ Ingresá el monto del préstamo'); return; }
   if (!tasa || !plazo) { showNotif('⚠ Ingresá la tasa y el plazo'); return; }
-  data.loan = { total, fecha, desc, tasa, plazo, tipTasa };
+  data.loan = { total, depositado, fecha, desc, tasa, plazo, tipTasa };
   saveLoanDB(data.loan);
   closeModal('config-prestamo');
   showNotif('✅ Condiciones del préstamo guardadas');
@@ -1772,14 +1790,26 @@ function setGasFilter(cat) { gasFilter = cat; renderGastos(); }
 // ── RENDER ────────────────────────────────────────────
 function renderDashboard() {
   updateMonthLabel();
-  const monthIngs = data.ingresos.filter(r => inCurrentMonth(r.fecha));
-  const monthGas = data.gastos.filter(r => inCurrentMonth(r.fecha));
-  const totalIng = monthIngs.reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
-  const totalGas = monthGas.reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
-  const balance = totalIng - totalGas;
-  const totalPagado = data.pagos.reduce((s,r) => s + (r.capital || r.monto), 0);
-  const saldoPrestamo = Math.max(0, data.loan.total - totalPagado);
 
+  // ── MES ACTUAL ──
+  const monthIngs = data.ingresos.filter(r => inCurrentMonth(r.fecha));
+  const monthGas  = data.gastos.filter(r => inCurrentMonth(r.fecha));
+  const totalIng  = monthIngs.reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
+  const totalGas  = monthGas.reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
+  const balance   = totalIng - totalGas;
+
+  // ── PRÉSTAMO ──
+  const totalCapitalPagado = data.pagos.reduce((s,r) => s + (r.capital || r.monto), 0);
+  const saldoPrestamo = Math.max(0, data.loan.total - totalCapitalPagado);
+
+  // ── SALDO EN CUENTA (acumulado desde el inicio) ──
+  // Parte del monto depositado + todos los ingresos − todos los gastos registrados
+  const depositado   = data.loan.depositado || 0;
+  const totalIngAcum = data.ingresos.reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
+  const totalGasAcum = data.gastos.reduce((s,r) => s + toCRC(r.monto, r.moneda), 0);
+  const saldoCuenta  = depositado + totalIngAcum - totalGasAcum;
+
+  // ── RENDER CARDS ──
   document.getElementById('dashIngresos').textContent = fmt(Math.round(totalIng));
   document.getElementById('dashIngresosCount').textContent = monthIngs.length + ' registros';
   document.getElementById('dashGastos').textContent = fmt(Math.round(totalGas));
@@ -1787,14 +1817,28 @@ function renderDashboard() {
   document.getElementById('dashBalance').textContent = fmt(Math.round(balance));
   document.getElementById('dashBalanceNote').textContent = balance >= 0 ? '✔ Positivo' : '⚠ Negativo';
   document.getElementById('dashBalance').style.color = balance >= 0 ? 'var(--green)' : 'var(--red)';
-  document.getElementById('dashPrestamo').textContent = fmt(saldoPrestamo);
-  document.getElementById('dashPrestamoNote').textContent = data.loan.total ? `de ${fmt(data.loan.total)}` : 'no configurado';
 
+  // Saldo cuenta
+  const cuentaCard = document.getElementById('dashCuentaCard');
+  document.getElementById('dashCuenta').textContent = fmt(Math.round(saldoCuenta));
+  document.getElementById('dashCuenta').style.color = saldoCuenta >= 0 ? 'var(--green)' : 'var(--red)';
+  cuentaCard.className = 'card ' + (saldoCuenta >= 0 ? 'green' : 'red');
+  document.getElementById('dashCuentaNote').textContent = depositado
+    ? `Depositado ${fmt(depositado)} ± movimientos`
+    : 'Configurá el monto depositado en Préstamo';
+
+  // Saldo préstamo
+  document.getElementById('dashPrestamo').textContent = fmt(saldoPrestamo);
+  document.getElementById('dashPrestamoNote').textContent = data.loan.total
+    ? `de ${fmt(data.loan.total)} aprobados`
+    : 'no configurado';
+
+  // ── BARRA INGRESOS VS GASTOS ──
   const barPct = totalIng > 0 ? Math.round(totalIng / (totalIng + totalGas) * 100) : 50;
   document.getElementById('balanceFill').style.width = Math.min(100, barPct) + '%';
   document.getElementById('balancePct').textContent = (totalIng > 0 ? Math.round(totalGas/totalIng*100) : 0) + '% gastado';
 
-  // recent tables — show original currency
+  // ── ÚLTIMOS MOVIMIENTOS ──
   const last5Ing = [...data.ingresos].slice(0,5);
   const last5Gas = [...data.gastos].slice(0,5);
   document.getElementById('dashIngresosBody').innerHTML = last5Ing.length
@@ -1850,6 +1894,7 @@ function renderPrestamo() {
 
   document.getElementById('loanSaldo').textContent = fmt(Math.round(saldo));
   document.getElementById('loanOriginal').textContent = fmt(data.loan.total);
+  document.getElementById('loanDepositado').textContent = data.loan.depositado ? fmt(data.loan.depositado) : '—';
   document.getElementById('loanPagado').textContent = fmt(Math.round(totalCapitalPagado));
   document.getElementById('loanIntereses').textContent = fmt(Math.round(totalInteresPagado));
   document.getElementById('loanCuota').textContent = cuotaMensual ? fmt(Math.round(cuotaMensual)) : '—';
@@ -1866,6 +1911,9 @@ function renderPrestamo() {
     const totalIntereses = amort.reduce((s,r) => s + r.interes, 0);
     const items = [
       { label: 'Entidad', value: data.loan.desc || '—' },
+      { label: 'Monto aprobado', value: fmt(data.loan.total) },
+      { label: 'Monto depositado', value: data.loan.depositado ? fmt(data.loan.depositado) : '—' },
+      { label: 'Diferencia (seguros/comisiones)', value: data.loan.depositado ? fmt(data.loan.total - data.loan.depositado) : '—' },
       { label: 'Tasa', value: data.loan.tasa + '% ' + data.loan.tipTasa },
       { label: 'Plazo', value: data.loan.plazo + ' meses' },
       { label: 'Total a pagar (con intereses)', value: fmt(Math.round(totalAPagar)) },
