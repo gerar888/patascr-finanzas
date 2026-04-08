@@ -1660,55 +1660,78 @@ function segBadge(seg) {
   return `<span class="badge ${cls}">${m.label}</span>`;
 }
 
+// ── CSV PARSER ROBUSTO ────────────────────────────────
+function parseCSVRobust(text) {
+  // Normalizar BOM y line endings
+  text = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const rows = [];
+  let cur = '', inQ = false, row = [];
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i], next = text[i+1];
+    if (inQ) {
+      if (ch === '"' && next === '"') { cur += '"'; i++; }      // escaped quote
+      else if (ch === '"') { inQ = false; }                     // end quote
+      else { cur += ch; }
+    } else {
+      if (ch === '"') { inQ = true; }                           // start quote
+      else if (ch === ',') { row.push(cur); cur = ''; }         // field sep
+      else if (ch === '\n') {
+        row.push(cur); cur = '';
+        if (row.some(c => c.trim())) rows.push(row);            // skip blank rows
+        row = [];
+      } else { cur += ch; }
+    }
+  }
+  if (cur || row.length) { row.push(cur); if (row.some(c=>c.trim())) rows.push(row); }
+  return rows;
+}
+
 // Importar CSV
 function importCSV(input) {
   const file = input.files[0];
   if (!file) return;
+  showNotif('⏳ Procesando CSV...');
   const reader = new FileReader();
   reader.onload = async e => {
-    const text = e.target.result;
-    const lines = text.split('\n').filter(l => l.trim());
-    const headers = lines[0].split(',').map(h => h.trim().replace(/^\uFEFF/,''));
+    const rows = parseCSVRobust(e.target.result);
+    if (rows.length < 2) { showNotif('⚠ CSV vacío o formato incorrecto'); return; }
 
+    const headers = rows[0].map(h => h.trim());
     const idx = h => headers.indexOf(h);
     const parsed = [];
 
-    for (let i = 1; i < lines.length; i++) {
-      // CSV parse básico que maneja comillas
-      const cols = [];
-      let cur = '', inQ = false;
-      for (const ch of lines[i]) {
-        if (ch === '"') { inQ = !inQ; }
-        else if (ch === ',' && !inQ) { cols.push(cur); cur = ''; }
-        else cur += ch;
-      }
-      cols.push(cur);
-
-      const get = h => (cols[idx(h)] || '').trim().replace(/^"|"$/g,'');
+    for (let i = 1; i < rows.length; i++) {
+      const cols = rows[i];
+      const get = h => { const v = cols[idx(h)]; return v !== undefined ? v.trim() : ''; };
       const id = get('members.member.id');
       if (!id) continue;
 
       const pts = parseFloat(get('members.member.points')) || 0;
       parsed.push({
         id,
-        nombre: get('person.displayName') || get('person.forename') || get('person.surname') || '—',
-        email:  get('person.emailAddress'),
-        tel:    get('person.mobileNumber'),
-        mascota: get('meta.mascota') || '—',
-        puntos: pts,
-        optOut: get('universal.optOut').toLowerCase() === 'true',
+        nombre:     get('person.displayName') || get('person.forename') || get('person.surname') || '—',
+        email:      get('person.emailAddress'),
+        tel:        get('person.mobileNumber'),
+        mascota:    get('meta.mascota') || '—',
+        puntos:     pts,
+        optOut:     get('universal.optOut').toLowerCase() === 'true',
         passStatus: get('member.passMetaData.status'),
-        creado: get('members.member.created'),
+        creado:     get('members.member.created'),
       });
     }
 
-    // Guardar en Firebase
+    if (!parsed.length) { showNotif('⚠ No se encontraron filas válidas en el CSV'); return; }
+
+    // Guardar en Firebase de a lotes para no saturar
     try {
+      let saved = 0;
       for (const c of parsed) {
         await fbPut('clientes/' + c.id, c);
+        saved++;
+        if (saved % 10 === 0) showNotif(`⏳ Guardando... ${saved}/${parsed.length}`);
       }
       campClientes = parsed;
-      showNotif(`✅ ${parsed.length} clientes importados`);
+      showNotif(`✅ ${parsed.length} clientes importados correctamente`);
       renderCampanas();
     } catch(e) {
       showNotif('⚠ Error guardando en Firebase: ' + e.message);
