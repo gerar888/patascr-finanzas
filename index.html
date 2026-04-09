@@ -705,7 +705,8 @@
       <div class="page-header">
         <div><div class="page-title">Clientes</div><div class="page-subtitle">CRM — mascotas, frecuencia de compra y alertas</div></div>
         <div class="page-actions">
-          <button class="btn btn-ghost btn-sm" onclick="showPage('campanas')">📣 Ir a Campañas</button>
+          <button class="btn btn-ghost btn-sm" onclick="showPage('campanas')">📣 Campañas</button>
+          <button class="btn btn-primary" onclick="openModal('crm-nuevo')">+ Nuevo cliente</button>
         </div>
       </div>
 
@@ -733,7 +734,7 @@
       <div id="crm-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px"></div>
     </div>
 
-    <!-- MODAL: EDITAR CLIENTE CRM -->
+    <!-- MODAL: NUEVO CLIENTE CRM -->
 
     <!-- PROMOCIONES -->
     <div class="page" id="page-promociones">
@@ -1067,6 +1068,115 @@
   </div>
   <div class="bnav-more-item" id="bnav-rentabilidad" onclick="bnavGo('rentabilidad')">
     <span>🎯</span> Rentabilidad
+  </div>
+</div>
+
+<!-- MODAL: NUEVO CLIENTE CRM -->
+<div class="modal-overlay" id="modal-crm-nuevo">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><div class="modal-title">🐾 Nuevo cliente</div><button class="close-btn" onclick="closeModal('crm-nuevo')">✕</button></div>
+    <div class="form-grid">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre del cliente</label><input type="text" class="form-input" id="crm-n-nombre" placeholder="Ej: Laura Camacho"></div>
+        <div class="form-group"><label class="form-label">Teléfono / WhatsApp</label><input type="text" class="form-input" id="crm-n-tel" placeholder="+506 8888 0000"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email" class="form-input" id="crm-n-email" placeholder="cliente@correo.com"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre de la mascota</label><input type="text" class="form-input" id="crm-n-mascota" placeholder="Ej: Khala"></div>
+        <div class="form-group">
+          <label class="form-label">Tipo de mascota</label>
+          <select class="form-select" id="crm-n-tipo">
+            <option value="perro">🐶 Perro</option>
+            <option value="gato">🐱 Gato</option>
+            <option value="otro">🐾 Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Producto principal</label><input type="text" class="form-input" id="crm-n-producto" placeholder="Ej: NutriSource Adulto 5.45kg"></div>
+        <div class="form-group">
+          <label class="form-label">Frecuencia de compra</label>
+          <select class="form-select" id="crm-n-frecuencia">
+            <option value="7">Semanal (7 días)</option>
+            <option value="15">Quincenal (15 días)</option>
+            <option value="30" selected>Mensual (30 días)</option>
+            <option value="45">Cada 45 días</option>
+            <option value="60">Cada 2 meses</option>
+            <option value="90">Cada 3 meses</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Última compra</label><input type="date" class="form-input" id="crm-n-ultima"></div>
+      <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="crm-n-notas" placeholder="Alergias, preferencias, observaciones…"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('crm-nuevo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarNuevoCliente()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: EDITAR CLIENTE CRM -->
+<div class="modal-overlay" id="modal-crm-editar">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><div class="modal-title">✏️ Editar cliente</div><button class="close-btn" onclick="closeModal('crm-editar')">✕</button></div>
+    <input type="hidden" id="crm-e-id">
+    <div class="form-grid">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre del cliente</label><input type="text" class="form-input" id="crm-e-nombre"></div>
+        <div class="form-group"><label class="form-label">Teléfono / WhatsApp</label><input type="text" class="form-input" id="crm-e-tel"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Correo electrónico</label><input type="email" class="form-input" id="crm-e-email"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Nombre de la mascota</label><input type="text" class="form-input" id="crm-e-mascota"></div>
+        <div class="form-group">
+          <label class="form-label">Tipo de mascota</label>
+          <select class="form-select" id="crm-e-tipo">
+            <option value="perro">🐶 Perro</option>
+            <option value="gato">🐱 Gato</option>
+            <option value="otro">🐾 Otro</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Producto principal</label><input type="text" class="form-input" id="crm-e-producto"></div>
+        <div class="form-group">
+          <label class="form-label">Frecuencia de compra</label>
+          <select class="form-select" id="crm-e-frecuencia">
+            <option value="7">Semanal (7 días)</option>
+            <option value="15">Quincenal (15 días)</option>
+            <option value="30">Mensual (30 días)</option>
+            <option value="45">Cada 45 días</option>
+            <option value="60">Cada 2 meses</option>
+            <option value="90">Cada 3 meses</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Última compra</label><input type="date" class="form-input" id="crm-e-ultima"></div>
+      <div class="form-group"><label class="form-label">Notas</label><textarea class="form-textarea" id="crm-e-notas"></textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('crm-editar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="actualizarCliente()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: REGISTRAR COMPRA CRM -->
+<div class="modal-overlay" id="modal-crm-compra">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-header"><div class="modal-title">🛒 Registrar compra</div><button class="close-btn" onclick="closeModal('crm-compra')">✕</button></div>
+    <input type="hidden" id="crmc-id">
+    <div id="crmc-cliente-info" style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:14px;color:var(--text2)"></div>
+    <div class="form-grid">
+      <div class="form-group"><label class="form-label">Fecha de compra</label><input type="date" class="form-input" id="crmc-fecha"></div>
+      <div class="form-group"><label class="form-label">Producto comprado</label><input type="text" class="form-input" id="crmc-producto" placeholder="Ej: NutriSource Adulto 5.45kg"></div>
+      <div class="form-group"><label class="form-label">Nota (opcional)</label><input type="text" class="form-input" id="crmc-nota" placeholder="Ej: Compró 2 unidades"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('crm-compra')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarCompra()">Registrar</button>
+    </div>
   </div>
 </div>
 
@@ -2385,7 +2495,8 @@ function renderClientes() {
       ${crm.notas ? `<div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-style:italic">"${crm.notas}"</div>` : ''}
       <div style="display:flex;gap:6px">
         <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px" onclick="abrirCrmEdit('${c.id}')">✏️ Editar</button>
-        ${tel ? `<a href="https://wa.me/${tel}" target="_blank" class="btn btn-ghost btn-sm" style="flex:1;font-size:11px;text-decoration:none;text-align:center">💬 WA</a>` : ''}
+        <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px;background:var(--gold-soft);color:#8a6d10;border-color:var(--gold)" onclick="abrirRegistrarCompra('${c.id}')">🛒 Compra</button>
+        ${tel ? `<a href="https://wa.me/${tel}" target="_blank" class="btn btn-ghost btn-sm" style="flex:1;font-size:11px;text-decoration:none;text-align:center">💬</a>` : ''}
         ${!c.optOut ? `<button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px" onclick="quickEmail('${c.id}')">📧</button>` : ''}
       </div>
     </div>`;
@@ -2400,21 +2511,105 @@ function quickEmail(id) {
   openModal('camp-template');
 }
 
-// Modal inline para editar CRM (simple prompt-based por ahora)
+// Modal inline para editar CRM
 function abrirCrmEdit(id) {
   const c = campClientes.find(x=>x.id===id);
   if (!c) return;
   const crm = crmData[id] || {};
-  const freq = prompt(`${c.nombre} · ${c.mascota}\n\nFrecuencia de compra (días):\nEjemplo: 30 = mensual, 15 = quincenal`, crm.frecuencia || 30);
-  if (freq === null) return;
-  const ultima = prompt('Fecha última compra (YYYY-MM-DD):', crm.ultimaCompra || new Date().toISOString().split('T')[0]);
-  if (ultima === null) return;
-  const prod = prompt('Producto principal:', crm.productoPrincipal || '');
-  const nota = prompt('Notas:', crm.notas || '');
-  const updated = { frecuencia: parseInt(freq)||30, ultimaCompra: ultima, productoPrincipal: prod||'', notas: nota||'', tipoMascota: crm.tipoMascota||'perro' };
+  document.getElementById('crm-e-id').value = id;
+  document.getElementById('crm-e-nombre').value = c.nombre || '';
+  document.getElementById('crm-e-tel').value = c.tel || '';
+  document.getElementById('crm-e-email').value = c.email || '';
+  document.getElementById('crm-e-mascota').value = c.mascota || '';
+  document.getElementById('crm-e-tipo').value = crm.tipoMascota || 'perro';
+  document.getElementById('crm-e-producto').value = crm.productoPrincipal || '';
+  document.getElementById('crm-e-frecuencia').value = crm.frecuencia || 30;
+  document.getElementById('crm-e-ultima').value = crm.ultimaCompra || c.creado?.substring(0,10) || '';
+  document.getElementById('crm-e-notas').value = crm.notas || '';
+  openModal('crm-editar');
+}
+
+async function actualizarCliente() {
+  const id = document.getElementById('crm-e-id').value;
+  const c = campClientes.find(x=>x.id===id);
+  if (!c) return;
+  c.nombre  = document.getElementById('crm-e-nombre').value.trim() || c.nombre;
+  c.tel     = document.getElementById('crm-e-tel').value.trim();
+  c.email   = document.getElementById('crm-e-email').value.trim();
+  c.mascota = document.getElementById('crm-e-mascota').value.trim() || c.mascota;
+  const updated = {
+    tipoMascota:       document.getElementById('crm-e-tipo').value,
+    productoPrincipal: document.getElementById('crm-e-producto').value.trim(),
+    frecuencia:        parseInt(document.getElementById('crm-e-frecuencia').value) || 30,
+    ultimaCompra:      document.getElementById('crm-e-ultima').value,
+    notas:             document.getElementById('crm-e-notas').value.trim(),
+  };
   crmData[id] = updated;
-  fbPut('crm/'+id, updated).catch(()=>{});
-  showNotif('✅ Cliente actualizado');
+  try { await fbPut('clientes/'+id, c); await fbPut('crm/'+id, updated); showNotif('✅ Cliente actualizado'); }
+  catch(e) { showNotif('⚠ Error: '+e.message); }
+  closeModal('crm-editar');
+  renderClientes();
+}
+
+async function guardarNuevoCliente() {
+  const nombre = document.getElementById('crm-n-nombre').value.trim();
+  if (!nombre) { showNotif('⚠ El nombre es requerido'); return; }
+  const id = 'manual-' + Date.now();
+  const nuevoCliente = {
+    id, nombre,
+    email:      document.getElementById('crm-n-email').value.trim(),
+    tel:        document.getElementById('crm-n-tel').value.trim(),
+    mascota:    document.getElementById('crm-n-mascota').value.trim() || '—',
+    puntos:     0, optOut: false, passStatus: 'MANUAL',
+    creado:     new Date().toISOString(),
+  };
+  const crmEntry = {
+    tipoMascota:       document.getElementById('crm-n-tipo').value,
+    productoPrincipal: document.getElementById('crm-n-producto').value.trim(),
+    frecuencia:        parseInt(document.getElementById('crm-n-frecuencia').value) || 30,
+    ultimaCompra:      document.getElementById('crm-n-ultima').value || new Date().toISOString().split('T')[0],
+    notas:             document.getElementById('crm-n-notas').value.trim(),
+  };
+  campClientes.push(nuevoCliente);
+  crmData[id] = crmEntry;
+  try { await fbPut('clientes/'+id, nuevoCliente); await fbPut('crm/'+id, crmEntry); showNotif('✅ Cliente agregado'); }
+  catch(e) { showNotif('⚠ Error: '+e.message); }
+  ['crm-n-nombre','crm-n-tel','crm-n-email','crm-n-mascota','crm-n-producto','crm-n-notas','crm-n-ultima'].forEach(fid => { const el=document.getElementById(fid); if(el) el.value=''; });
+  closeModal('crm-nuevo');
+  renderClientes();
+}
+
+function abrirRegistrarCompra(id) {
+  const c = campClientes.find(x=>x.id===id);
+  if (!c) return;
+  const crm = crmData[id] || {};
+  document.getElementById('crmc-id').value = id;
+  document.getElementById('crmc-cliente-info').innerHTML =
+    `<strong>${c.nombre}</strong> · ${c.mascota} · <span style="color:var(--text3)">${crm.productoPrincipal || 'Sin producto registrado'}</span>`;
+  document.getElementById('crmc-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('crmc-producto').value = crm.productoPrincipal || '';
+  document.getElementById('crmc-nota').value = '';
+  openModal('crm-compra');
+}
+
+async function guardarCompra() {
+  const id    = document.getElementById('crmc-id').value;
+  const fecha = document.getElementById('crmc-fecha').value;
+  const prod  = document.getElementById('crmc-producto').value.trim();
+  const nota  = document.getElementById('crmc-nota').value.trim();
+  if (!fecha) { showNotif('⚠ La fecha es requerida'); return; }
+  const existing = crmData[id] || {};
+  const notaHistorial = `[${fecha}] ${prod}${nota?' — '+nota:''}`;
+  const updated = {
+    ...existing,
+    ultimaCompra:      fecha,
+    productoPrincipal: prod || existing.productoPrincipal || '',
+    notas:             notaHistorial,
+  };
+  crmData[id] = updated;
+  try { await fbPut('crm/'+id, updated); showNotif('✅ Compra registrada — última compra actualizada'); }
+  catch(e) { showNotif('⚠ Error: '+e.message); }
+  closeModal('crm-compra');
   renderClientes();
 }
 
