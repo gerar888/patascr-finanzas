@@ -269,6 +269,22 @@
 
   /* SIM SLIDERS */
   .sim-slider { width: 100%; accent-color: var(--accent); cursor: pointer; }
+
+  /* CRM CARDS */
+  .crm-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); position: relative; overflow: hidden; }
+  .crm-card.alerta { border-left: 4px solid var(--red); }
+  .crm-card.activo { border-left: 4px solid var(--green); }
+  .crm-card.vip { border-left: 4px solid var(--gold); }
+  .crm-avatar { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .crm-dias-badge { position: absolute; top: 12px; right: 12px; font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 99px; }
+
+  /* PRODUCT CATALOG ITEMS */
+  .prod-item { background: var(--surface); border: 1.5px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: all 0.15s; font-size: 13px; }
+  .prod-item:hover { border-color: var(--accent); }
+  .prod-item.selected { border-color: var(--accent); background: var(--accent-soft); }
+  .prod-item .prod-nombre { font-weight: 600; margin-bottom: 2px; }
+  .prod-item .prod-precio { color: var(--text2); font-size: 12px; }
+  .prod-item .prod-check { color: var(--accent); float: right; font-size: 16px; }
 </style>
 <body>
 
@@ -343,7 +359,10 @@
     <div class="nav-item" onclick="showPage('reportes')"><span class="nav-icon">📋</span> Reportes</div>
     <div class="nav-item" onclick="showPage('rentabilidad')"><span class="nav-icon">🎯</span> Rentabilidad</div>
     <div class="nav-section">Clientes</div>
+    <div class="nav-item" onclick="showPage('clientes')"><span class="nav-icon">🐾</span> Clientes</div>
     <div class="nav-item" onclick="showPage('campanas')"><span class="nav-icon">📣</span> Campañas</div>
+    <div class="nav-section">Comercial</div>
+    <div class="nav-item" onclick="showPage('promociones')"><span class="nav-icon">🎁</span> Promociones</div>
   </nav>
 
   <main>
@@ -360,11 +379,11 @@
           <button onclick="nextMonth()">›</button>
         </div>
       </div>
-      <div class="cards-grid">
-        <div class="card green"><div class="card-label">Ingresos del mes</div><div class="card-value" id="dashIngresos">₡0</div><div class="card-sub" id="dashIngresosCount">0 registros</div></div>
-        <div class="card red"><div class="card-label">Gastos del mes</div><div class="card-value" id="dashGastos">₡0</div><div class="card-sub" id="dashGastosCount">0 registros</div></div>
-        <div class="card gold"><div class="card-label">Balance neto</div><div class="card-value" id="dashBalance">₡0</div><div class="card-sub" id="dashBalanceNote">—</div></div>
-        <div class="card blue"><div class="card-label">Saldo préstamo</div><div class="card-value" id="dashPrestamo">₡0</div><div class="card-sub" id="dashPrestamoNote">pendiente</div></div>
+      <div class="cards-grid" id="dash-cards">
+        <div class="card green"><div class="card-label">Ingresos del mes</div><div class="card-value" id="dashIngresos" style="color:var(--text3)">—</div><div class="card-sub" id="dashIngresosCount">cargando…</div></div>
+        <div class="card red"><div class="card-label">Gastos del mes</div><div class="card-value" id="dashGastos" style="color:var(--text3)">—</div><div class="card-sub" id="dashGastosCount">cargando…</div></div>
+        <div class="card gold"><div class="card-label">Balance neto</div><div class="card-value" id="dashBalance" style="color:var(--text3)">—</div><div class="card-sub" id="dashBalanceNote">—</div></div>
+        <div class="card blue"><div class="card-label">Saldo préstamo</div><div class="card-value" id="dashPrestamo" style="color:var(--text3)">—</div><div class="card-sub" id="dashPrestamoNote">cargando…</div></div>
       </div>
       <div class="balance-section">
         <div class="balance-title"><span>Relación Ingresos vs Gastos</span><span id="balancePct">—%</span></div>
@@ -671,10 +690,129 @@
       </div>
 
       <!-- Acción flotante al seleccionar -->
-      <div id="camp-action-bar" style="display:none;position:fixed;bottom:40px;left:50%;transform:translateX(-50%);background:var(--text);color:white;padding:14px 24px;border-radius:14px;display:none;align-items:center;gap:16px;box-shadow:var(--shadow-lg);z-index:80;white-space:nowrap">
+      <div id="camp-action-bar" style="display:none;position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--text);color:white;padding:14px 24px;border-radius:14px;align-items:center;gap:16px;box-shadow:var(--shadow-lg);z-index:80;white-space:nowrap">
         <span id="camp-action-count" style="font-size:14px;font-weight:600">0 seleccionados</span>
         <button class="btn btn-green btn-sm" onclick="openModal('camp-template')">📧 Enviar correo</button>
         <button class="btn btn-ghost btn-sm" style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.3)" onclick="openWhatsAppBulk()">💬 WhatsApp</button>
+      </div>
+    </div>
+
+    <!-- CLIENTES CRM -->
+    <div class="page" id="page-clientes">
+      <div class="page-header">
+        <div><div class="page-title">Clientes</div><div class="page-subtitle">CRM — mascotas, frecuencia de compra y alertas</div></div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="showPage('campanas')">📣 Ir a Campañas</button>
+        </div>
+      </div>
+
+      <!-- Alertas de reactivación -->
+      <div id="crm-alerts" style="margin-bottom:20px;display:none">
+        <div style="background:var(--red-soft);border:1px solid var(--red);border-radius:var(--radius);padding:16px 20px">
+          <div style="font-size:13px;font-weight:600;color:var(--red);margin-bottom:8px">⚠ Clientes que necesitan reactivación</div>
+          <div id="crm-alerts-list" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="toolbar" style="margin-bottom:16px">
+        <div class="filter-chip active" id="crm-f-todos" onclick="setCrmFilter('todos')">Todos</div>
+        <div class="filter-chip" id="crm-f-alerta" onclick="setCrmFilter('alerta')" style="border-color:var(--red);color:var(--red)">⚠ Alerta</div>
+        <div class="filter-chip" id="crm-f-activo" onclick="setCrmFilter('activo')">Activos</div>
+        <div class="filter-chip" id="crm-f-vip" onclick="setCrmFilter('vip')">VIP 2000+</div>
+        <div class="search-box" style="margin-left:auto">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#b0a090" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" class="search-input" placeholder="Nombre o mascota…" oninput="setCrmSearch(this.value)">
+        </div>
+      </div>
+
+      <!-- Cards grid de clientes -->
+      <div id="crm-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px"></div>
+    </div>
+
+    <!-- MODAL: EDITAR CLIENTE CRM -->
+
+    <!-- PROMOCIONES -->
+    <div class="page" id="page-promociones">
+      <div class="page-header">
+        <div><div class="page-title">Promociones</div><div class="page-subtitle">Armá bundles, calculá precios y generá texto con IA</div></div>
+        <div class="page-actions">
+          <button class="btn btn-ghost btn-sm" onclick="limpiarPromo()">🗑 Limpiar</button>
+          <button class="btn btn-primary" onclick="guardarPromo()">💾 Guardar promoción</button>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <!-- Catálogo -->
+        <div>
+          <div class="section-box" style="margin-bottom:16px">
+            <div class="section-box-header">
+              <div class="section-box-title">📦 Catálogo de productos</div>
+              <div style="font-size:12px;color:var(--text3)" id="promo-selected-count">0 seleccionados</div>
+            </div>
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:6px;flex-wrap:wrap" id="promo-brand-filters">
+              <div class="filter-chip active" onclick="setPromoMarca('Todos')">Todas</div>
+            </div>
+            <div id="promo-catalog" style="padding:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:420px;overflow-y:auto"></div>
+          </div>
+        </div>
+
+        <!-- Bundle builder -->
+        <div>
+          <div class="section-box" style="margin-bottom:16px">
+            <div class="section-box-header"><div class="section-box-title">🛒 En esta promoción</div></div>
+            <div id="promo-bundle" style="padding:16px;min-height:120px">
+              <div class="empty-state" style="padding:20px"><div class="empty-icon">🛒</div><div class="empty-msg">Seleccioná productos del catálogo</div></div>
+            </div>
+            <div style="padding:16px;border-top:1px solid var(--border)">
+              <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+                <div style="flex:1;min-width:140px">
+                  <div class="form-label" style="margin-bottom:4px">Descuento %</div>
+                  <input type="range" class="sim-slider" id="promo-desc" min="0" max="40" step="1" value="10" oninput="recalcPromo()">
+                </div>
+                <div style="font-size:22px;font-weight:700;color:var(--accent)" id="promo-desc-pct">10%</div>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;text-align:center">
+                <div style="background:var(--surface2);border-radius:10px;padding:10px">
+                  <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px">Precio normal</div>
+                  <div style="font-size:18px;font-weight:700;color:var(--text2);text-decoration:line-through" id="promo-precio-orig">₡0</div>
+                </div>
+                <div style="background:var(--accent-soft);border-radius:10px;padding:10px">
+                  <div style="font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px">Precio bundle</div>
+                  <div style="font-size:18px;font-weight:700;color:var(--accent)" id="promo-precio-final">₡0</div>
+                </div>
+                <div style="background:var(--green-soft);border-radius:10px;padding:10px">
+                  <div style="font-size:11px;color:var(--green);text-transform:uppercase;letter-spacing:0.5px">Margen</div>
+                  <div style="font-size:18px;font-weight:700;color:var(--green)" id="promo-margen">0%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- IA -->
+          <div class="section-box">
+            <div class="section-box-header">
+              <div class="section-box-title">✨ Texto con IA</div>
+              <button class="btn btn-primary btn-sm" onclick="generarTextoIA()">✨ Generar</button>
+            </div>
+            <div style="padding:16px">
+              <div id="promo-ia-result" style="min-height:80px;font-size:14px;color:var(--text2);line-height:1.7">
+                <span style="color:var(--text3)">Seleccioná productos y presioná Generar para obtener nombre, descripción y sugerencia de precio.</span>
+              </div>
+              <div style="margin-top:10px;display:flex;gap:8px;justify-content:flex-end">
+                <button class="btn btn-ghost btn-sm" onclick="copiarTextoIA()" id="btn-copiar-ia" style="display:none">📋 Copiar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Promociones guardadas -->
+      <div class="section-box" style="margin-top:20px">
+        <div class="section-box-header"><div class="section-box-title">📌 Promociones guardadas</div></div>
+        <div id="promo-saved-list" style="padding:16px">
+          <div class="empty-state"><div class="empty-icon">🎁</div><div class="empty-msg">No hay promociones guardadas aún</div></div>
+        </div>
       </div>
     </div>
 
@@ -897,8 +1035,8 @@
     <button class="bnav-item" id="bnav-gastos" onclick="bnavGo('gastos')">
       <span>📉</span><span>Gastos</span>
     </button>
-    <button class="bnav-item" id="bnav-campanas" onclick="bnavGo('campanas')">
-      <span>📣</span><span>Campañas</span>
+    <button class="bnav-item" id="bnav-clientes" onclick="bnavGo('clientes')">
+      <span>🐾</span><span>Clientes</span>
     </button>
     <button class="bnav-item" id="bnav-more" onclick="toggleBnavMore()">
       <span>⋯</span><span>Más</span>
@@ -908,6 +1046,12 @@
 
 <!-- BOTTOM NAV "MÁS" drawer -->
 <div class="bnav-more" id="bnav-more-drawer" onclick="closeBnavMore()">
+  <div class="bnav-more-item" id="bnav-campanas" onclick="bnavGo('campanas')">
+    <span>📣</span> Campañas
+  </div>
+  <div class="bnav-more-item" id="bnav-promociones" onclick="bnavGo('promociones')">
+    <span>🎁</span> Promociones
+  </div>
   <div class="bnav-more-item" id="bnav-prestamo" onclick="bnavGo('prestamo')">
     <span>🏦</span> Préstamo
   </div>
@@ -1051,7 +1195,7 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  const map={dashboard:'Dashboard',ingresos:'Ingresos',gastos:'Gastos',prestamo:'Préstamo',reportes:'Reportes',rentabilidad:'Rentabilidad',campanas:'Campañas'};
+  const map={dashboard:'Dashboard',ingresos:'Ingresos',gastos:'Gastos',prestamo:'Préstamo',reportes:'Reportes',rentabilidad:'Rentabilidad',campanas:'Campañas',clientes:'Clientes',promociones:'Promociones'};
   document.querySelectorAll('.nav-item').forEach(item=>{ if(item.textContent.includes(map[id])) item.classList.add('active'); });
   closeSidebar();
   refresh();
@@ -1602,8 +1746,10 @@ function refresh() {
   if (id==='gastos') renderGastos();
   if (id==='prestamo') renderPrestamo();
   if (id==='reportes') renderReportes();
-  if (id==='rentabilidad') simRecalc();
+  if (id==='rentabilidad') { simAutoFill(); simRecalc(); }
   if (id==='campanas') renderCampanas();
+  if (id==='clientes') renderClientes();
+  if (id==='promociones') renderPromoSaved();
 }
 
 // ── SIMULADOR DE RENTABILIDAD ─────────────────────────
@@ -2124,6 +2270,7 @@ function openWhatsAppBulk() {
 // Inicializar campañas al entrar a la página
 async function initCampanas() {
   await loadContactHistory();
+  await loadCrmData();
   await seedClientesIfEmpty();
 }
 
@@ -2131,8 +2278,341 @@ async function initCampanas() {
 document.getElementById('modal-sendgrid-config').addEventListener('click', function(e) {
   if (e.target === this || e.target.closest('.modal')) loadSGConfig();
 });
-// ── BOTTOM NAV (móvil) ────────────────────────────────
-const BNAV_MORE_IDS = ['prestamo','reportes','rentabilidad'];
+// ── CLIENTES CRM ──────────────────────────────────────
+let crmFilter = 'todos', crmSearch = '';
+
+// CRM data stored in Firebase under /crm/{clientId}
+// Fields: frecuencia (days), ultimaCompra (date), tipoMascota, productoPrincipal, notas
+
+let crmData = {}; // keyed by client id
+
+async function loadCrmData() {
+  try {
+    const raw = await fbGet('crm');
+    crmData = raw || {};
+  } catch(e) { crmData = {}; }
+}
+
+function diasDesde(fechaStr) {
+  if (!fechaStr) return null;
+  const d = new Date(fechaStr.includes('T') ? fechaStr : fechaStr + 'T00:00:00');
+  return Math.floor((new Date() - d) / 86400000);
+}
+
+function crmStatus(c) {
+  const crm = crmData[c.id] || {};
+  const dias = diasDesde(crm.ultimaCompra || c.creado);
+  const freq = crm.frecuencia || 30;
+  if (c.puntos >= 2000) return 'vip';
+  if (dias !== null && dias > freq * 1.3) return 'alerta';
+  return 'activo';
+}
+
+function setCrmFilter(f) {
+  crmFilter = f;
+  document.querySelectorAll('[id^="crm-f-"]').forEach(el => el.classList.remove('active'));
+  document.getElementById('crm-f-' + f)?.classList.add('active');
+  renderClientes();
+}
+function setCrmSearch(v) { crmSearch = v.toLowerCase(); renderClientes(); }
+
+function renderClientes() {
+  if (!campClientes.length) campClientes = [...CLIENTES_SEED];
+
+  let list = [...campClientes];
+  if (crmFilter !== 'todos') list = list.filter(c => crmStatus(c) === crmFilter);
+  if (crmSearch) list = list.filter(c =>
+    (c.nombre||'').toLowerCase().includes(crmSearch) ||
+    (c.mascota||'').toLowerCase().includes(crmSearch)
+  );
+
+  // Alerts banner
+  const alertas = campClientes.filter(c => !c.optOut && crmStatus(c) === 'alerta');
+  const alertDiv = document.getElementById('crm-alerts');
+  if (alertas.length) {
+    alertDiv.style.display = 'block';
+    document.getElementById('crm-alerts-list').innerHTML = alertas.map(c => {
+      const dias = diasDesde(crmData[c.id]?.ultimaCompra || c.creado);
+      return `<span style="background:white;border:1px solid var(--red);border-radius:99px;padding:4px 12px;font-size:12px;color:var(--red);cursor:pointer" onclick="abrirCrmEdit('${c.id}')">${c.nombre} · ${c.mascota} · ${dias}d sin comprar</span>`;
+    }).join('');
+  } else alertDiv.style.display = 'none';
+
+  const grid = document.getElementById('crm-grid');
+  if (!list.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:40px"><div class="empty-icon">🐾</div><div class="empty-msg">Sin clientes</div></div>`;
+    return;
+  }
+
+  const petEmoji = t => ({ perro:'🐶', gato:'🐱' }[t] || '🐾');
+  grid.innerHTML = list.map(c => {
+    const crm = crmData[c.id] || {};
+    const status = crmStatus(c);
+    const dias = diasDesde(crm.ultimaCompra || c.creado);
+    const freq = crm.frecuencia || 30;
+    const diasLabel = dias !== null ? `${dias}d` : '—';
+    const statusColors = { alerta: 'var(--red)', activo: 'var(--green)', vip: 'var(--gold)' };
+    const statusBg = { alerta: 'var(--red-soft)', activo: 'var(--green-soft)', vip: 'var(--gold-soft)' };
+    const tel = (c.tel||'').replace(/\D/g,'');
+
+    return `<div class="crm-card ${status}">
+      <div class="crm-dias-badge" style="background:${statusBg[status]};color:${statusColors[status]}">${diasLabel} ${status==='alerta'?'⚠':status==='vip'?'⭐':''}</div>
+      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
+        <div class="crm-avatar" style="background:${statusBg[status]}">${petEmoji(crm.tipoMascota||'perro')}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.nombre}</div>
+          <div style="font-size:13px;color:var(--text2)">${c.mascota}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px">${c.puntos ? c.puntos.toLocaleString('es-CR')+' pts' : '0 pts'}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;font-size:12px">
+        <div style="background:var(--surface2);border-radius:8px;padding:6px 10px">
+          <div style="color:var(--text3)">Última compra</div>
+          <div style="font-weight:600">${crm.ultimaCompra || c.creado?.substring(0,10) || '—'}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:6px 10px">
+          <div style="color:var(--text3)">Frecuencia</div>
+          <div style="font-weight:600">c/ ${freq}d</div>
+        </div>
+      </div>
+      ${crm.productoPrincipal ? `<div style="font-size:12px;color:var(--text2);margin-bottom:10px">🛒 ${crm.productoPrincipal}</div>` : ''}
+      ${crm.notas ? `<div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-style:italic">"${crm.notas}"</div>` : ''}
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px" onclick="abrirCrmEdit('${c.id}')">✏️ Editar</button>
+        ${tel ? `<a href="https://wa.me/${tel}" target="_blank" class="btn btn-ghost btn-sm" style="flex:1;font-size:11px;text-decoration:none;text-align:center">💬 WA</a>` : ''}
+        ${!c.optOut ? `<button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px" onclick="quickEmail('${c.id}')">📧</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function quickEmail(id) {
+  const c = campClientes.find(x=>x.id===id);
+  if (!c) return;
+  campSelected.clear();
+  campSelected.add(id);
+  openModal('camp-template');
+}
+
+// Modal inline para editar CRM (simple prompt-based por ahora)
+function abrirCrmEdit(id) {
+  const c = campClientes.find(x=>x.id===id);
+  if (!c) return;
+  const crm = crmData[id] || {};
+  const freq = prompt(`${c.nombre} · ${c.mascota}\n\nFrecuencia de compra (días):\nEjemplo: 30 = mensual, 15 = quincenal`, crm.frecuencia || 30);
+  if (freq === null) return;
+  const ultima = prompt('Fecha última compra (YYYY-MM-DD):', crm.ultimaCompra || new Date().toISOString().split('T')[0]);
+  if (ultima === null) return;
+  const prod = prompt('Producto principal:', crm.productoPrincipal || '');
+  const nota = prompt('Notas:', crm.notas || '');
+  const updated = { frecuencia: parseInt(freq)||30, ultimaCompra: ultima, productoPrincipal: prod||'', notas: nota||'', tipoMascota: crm.tipoMascota||'perro' };
+  crmData[id] = updated;
+  fbPut('crm/'+id, updated).catch(()=>{});
+  showNotif('✅ Cliente actualizado');
+  renderClientes();
+}
+
+// ── PROMOCIONES ────────────────────────────────────────
+const CATALOGO = [
+  { id:'pp-1kg',   nombre:'Pro Plan Puppy 1kg',        marca:'Pro Plan',   cat:'Alimento',   precio:6500,  costo:5000 },
+  { id:'pp-3kg',   nombre:'Pro Plan Puppy 3kg',        marca:'Pro Plan',   cat:'Alimento',   precio:16500, costo:12500 },
+  { id:'pp-7kg',   nombre:'Pro Plan Adult 7.5kg',      marca:'Pro Plan',   cat:'Alimento',   precio:34000, costo:26000 },
+  { id:'ns-2kg',   nombre:'NutriSource Small 2kg',     marca:'NutriSource',cat:'Alimento',   precio:14500, costo:11000 },
+  { id:'ns-6kg',   nombre:'NutriSource Adult 6kg',     marca:'NutriSource',cat:'Alimento',   precio:27000, costo:21000 },
+  { id:'dc-2kg',   nombre:'Dog Chow Adulto 2kg',       marca:'Dog Chow',   cat:'Alimento',   precio:5500,  costo:4000 },
+  { id:'dc-8kg',   nombre:'Dog Chow Adulto 8kg',       marca:'Dog Chow',   cat:'Alimento',   precio:16500, costo:12000 },
+  { id:'rc-2kg',   nombre:'Royal Canin Mini Adult 2kg',marca:'Royal Canin',cat:'Alimento',   precio:19000, costo:15000 },
+  { id:'pcr-collar',nombre:'Collar ajustable premium', marca:'Patas CR',   cat:'Accesorio',  precio:4500,  costo:2500 },
+  { id:'pcr-sf',   nombre:'Slow feeder antiansiedad',  marca:'Patas CR',   cat:'Accesorio',  precio:5500,  costo:3000 },
+  { id:'pcr-nail', nombre:'Cortaúñas profesional',     marca:'Patas CR',   cat:'Accesorio',  precio:3500,  costo:1800 },
+  { id:'pcr-wb',   nombre:'Dispensador bolsas desechos',marca:'Patas CR',  cat:'Accesorio',  precio:2500,  costo:1200 },
+  { id:'pcr-toy1', nombre:'Juguete mordedor TPR',      marca:'Patas CR',   cat:'Juguete',    precio:3800,  costo:2000 },
+  { id:'pcr-toy2', nombre:'Juguete peluche squeaky',   marca:'Patas CR',   cat:'Juguete',    precio:4200,  costo:2200 },
+  { id:'pcr-toy3', nombre:'Kong rellenable mediano',   marca:'Patas CR',   cat:'Juguete',    precio:7500,  costo:4500 },
+];
+
+let promoSeleccionados = new Set();
+let promoMarcaFilter = 'Todos';
+let promoSaved = [];
+
+function setPromoMarca(m) {
+  promoMarcaFilter = m;
+  document.querySelectorAll('#promo-brand-filters .filter-chip').forEach(el => {
+    el.classList.toggle('active', el.textContent === m);
+  });
+  renderCatalog();
+}
+
+function renderCatalog() {
+  const marcas = ['Todos', ...new Set(CATALOGO.map(p=>p.marca))];
+  const filtersEl = document.getElementById('promo-brand-filters');
+  if (filtersEl) filtersEl.innerHTML = marcas.map(m =>
+    `<div class="filter-chip ${promoMarcaFilter===m?'active':''}" onclick="setPromoMarca('${m}')">${m}</div>`
+  ).join('');
+
+  const list = promoMarcaFilter === 'Todos' ? CATALOGO : CATALOGO.filter(p => p.marca === promoMarcaFilter);
+  const el = document.getElementById('promo-catalog');
+  if (!el) return;
+  el.innerHTML = list.map(p => {
+    const sel = promoSeleccionados.has(p.id);
+    return `<div class="prod-item ${sel?'selected':''}" onclick="toggleProducto('${p.id}')">
+      ${sel ? '<span class="prod-check">✓</span>' : ''}
+      <div class="prod-nombre">${p.nombre}</div>
+      <div class="prod-precio">${fmt(p.precio)} · costo ${fmt(p.costo)}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('promo-selected-count').textContent = promoSeleccionados.size + ' seleccionado' + (promoSeleccionados.size!==1?'s':'');
+}
+
+function toggleProducto(id) {
+  if (promoSeleccionados.has(id)) promoSeleccionados.delete(id);
+  else promoSeleccionados.add(id);
+  renderCatalog();
+  recalcPromo();
+}
+
+function recalcPromo() {
+  const desc = parseInt(document.getElementById('promo-desc')?.value || 10);
+  document.getElementById('promo-desc-pct').textContent = desc + '%';
+
+  const items = CATALOGO.filter(p => promoSeleccionados.has(p.id));
+  const totalPrecio = items.reduce((s,p) => s+p.precio, 0);
+  const totalCosto  = items.reduce((s,p) => s+p.costo, 0);
+  const precioFinal = Math.round(totalPrecio * (1 - desc/100));
+  const margen = precioFinal > 0 ? Math.round((precioFinal - totalCosto) / precioFinal * 100) : 0;
+
+  document.getElementById('promo-precio-orig').textContent  = fmt(totalPrecio);
+  document.getElementById('promo-precio-final').textContent = fmt(precioFinal);
+  document.getElementById('promo-margen').textContent       = margen + '%';
+  document.getElementById('promo-margen').style.color       = margen >= 20 ? 'var(--green)' : margen >= 10 ? 'var(--gold)' : 'var(--red)';
+
+  // Bundle list
+  const bundleEl = document.getElementById('promo-bundle');
+  if (items.length) {
+    bundleEl.innerHTML = items.map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px">
+        <span>${p.nombre}</span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="color:var(--text2)">${fmt(p.precio)}</span>
+          <button onclick="toggleProducto('${p.id}')" style="background:none;border:none;cursor:pointer;color:var(--red);font-size:16px;padding:0">×</button>
+        </div>
+      </div>`).join('');
+  } else {
+    bundleEl.innerHTML = '<div class="empty-state" style="padding:20px"><div class="empty-icon">🛒</div><div class="empty-msg">Seleccioná productos del catálogo</div></div>';
+  }
+}
+
+async function generarTextoIA() {
+  const items = CATALOGO.filter(p => promoSeleccionados.has(p.id));
+  if (!items.length) { showNotif('⚠ Seleccioná al menos un producto'); return; }
+
+  const desc = parseInt(document.getElementById('promo-desc')?.value || 10);
+  const precioFinal = Math.round(items.reduce((s,p)=>s+p.precio,0) * (1-desc/100));
+  const iaEl = document.getElementById('promo-ia-result');
+  iaEl.innerHTML = '<span style="color:var(--text3)">✨ Generando con IA...</span>';
+
+  const productosTexto = items.map(p => `- ${p.nombre} (precio normal: ${fmt(p.precio)})`).join('\n');
+  const prompt = `Sos un experto en marketing para tiendas de mascotas en Costa Rica. Tenemos un bundle promocional para perros con estos productos:\n${productosTexto}\n\nPrecio del bundle con ${desc}% descuento: ${fmt(precioFinal)}\n\nGenerá en español:\n1. Un nombre creativo y emotivo para este bundle (máx 6 palabras)\n2. Una descripción corta para Instagram/WhatsApp (máx 3 líneas, con emojis, que genere urgencia)\n3. Una sugerencia de precio final redondeado que se vea atractivo\n\nSé conciso, cálido y enfocado en el amor por las mascotas.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await resp.json();
+    const texto = data.content?.[0]?.text || 'Error generando texto';
+    iaEl.innerHTML = `<div style="white-space:pre-wrap;line-height:1.7">${texto.replace(/</g,'&lt;')}</div>`;
+    document.getElementById('btn-copiar-ia').style.display = 'inline-flex';
+    iaEl.dataset.texto = texto;
+  } catch(e) {
+    iaEl.innerHTML = '<span style="color:var(--red)">⚠ Error al conectar con IA. Verificá tu conexión.</span>';
+  }
+}
+
+function copiarTextoIA() {
+  const texto = document.getElementById('promo-ia-result')?.dataset.texto || '';
+  navigator.clipboard.writeText(texto).then(() => showNotif('📋 Copiado al portapapeles'));
+}
+
+async function guardarPromo() {
+  const items = CATALOGO.filter(p => promoSeleccionados.has(p.id));
+  if (!items.length) { showNotif('⚠ Seleccioná productos primero'); return; }
+  const desc = parseInt(document.getElementById('promo-desc')?.value || 10);
+  const precioFinal = Math.round(items.reduce((s,p)=>s+p.precio,0) * (1-desc/100));
+  const nombre = prompt('Nombre de esta promoción:', `Bundle ${MONTHS[new Date().getMonth()]} ${new Date().getFullYear()}`);
+  if (!nombre) return;
+
+  const promo = {
+    id: Date.now(),
+    nombre,
+    productos: items.map(p=>p.id),
+    descuento: desc,
+    precioFinal,
+    iaTexto: document.getElementById('promo-ia-result')?.dataset.texto || '',
+    fecha: new Date().toISOString().split('T')[0]
+  };
+
+  try {
+    await fbPut('promociones/' + promo.id, promo);
+    showNotif('✅ Promoción guardada');
+    renderPromoSaved();
+  } catch(e) { showNotif('⚠ Error guardando: ' + e.message); }
+}
+
+async function renderPromoSaved() {
+  renderCatalog();
+  recalcPromo();
+  try {
+    const raw = await fbGet('promociones');
+    promoSaved = raw ? Object.values(raw).sort((a,b)=>b.id-a.id) : [];
+  } catch(e) { promoSaved = []; }
+
+  const el = document.getElementById('promo-saved-list');
+  if (!el) return;
+  if (!promoSaved.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🎁</div><div class="empty-msg">No hay promociones guardadas aún</div></div>';
+    return;
+  }
+  el.innerHTML = promoSaved.map(p => {
+    const prods = CATALOGO.filter(c => (p.productos||[]).includes(c.id));
+    return `<div style="padding:14px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-weight:600;font-size:14px">${p.nombre}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:2px">${prods.map(x=>x.nombre).join(' + ')}</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">📅 ${p.fecha}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="text-align:right">
+            <div style="font-size:18px;font-weight:700;color:var(--accent)">${fmt(p.precioFinal)}</div>
+            <div style="font-size:11px;color:var(--text3)">${p.descuento}% desc</div>
+          </div>
+          <button onclick="eliminarPromo(${p.id})" class="btn btn-danger btn-sm">🗑</button>
+        </div>
+      </div>
+      ${p.iaTexto ? `<div style="margin-top:8px;background:var(--surface2);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--text2);cursor:pointer" onclick="navigator.clipboard.writeText(this.dataset.t).then(()=>showNotif('📋 Copiado'))" data-t="${p.iaTexto.replace(/"/g,'&quot;')}">📋 ${p.iaTexto.substring(0,80)}…</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+async function eliminarPromo(id) {
+  if (!confirm('¿Eliminar esta promoción?')) return;
+  try { await fbDelete('promociones/'+id); renderPromoSaved(); showNotif('🗑 Eliminada'); } catch(e) {}
+}
+
+function limpiarPromo() {
+  promoSeleccionados.clear();
+  renderCatalog();
+  recalcPromo();
+  const iaEl = document.getElementById('promo-ia-result');
+  if (iaEl) { iaEl.innerHTML = '<span style="color:var(--text3)">Seleccioná productos y presioná Generar para obtener nombre, descripción y sugerencia de precio.</span>'; iaEl.dataset.texto = ''; }
+  document.getElementById('btn-copiar-ia').style.display = 'none';
+}
+const BNAV_MORE_IDS = ['prestamo','reportes','rentabilidad','campanas','promociones'];
 
 function bnavGo(id) {
   closeBnavMore();
