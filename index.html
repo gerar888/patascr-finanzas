@@ -718,6 +718,17 @@
         </div>
       </div>
 
+      <!-- Lista de contacto prioritaria -->
+      <div class="section-box" style="margin-bottom:20px" id="crm-contactar-box">
+        <div class="section-box-header">
+          <div class="section-box-title">📞 A contactar esta semana</div>
+          <div style="font-size:12px;color:var(--text3)" id="crm-contactar-count">—</div>
+        </div>
+        <div id="crm-contactar-lista" style="padding:0">
+          <div class="empty-state" style="padding:20px"><div class="empty-msg">Registrá últimas compras para ver quién necesita contacto</div></div>
+        </div>
+      </div>
+
       <!-- Filtros -->
       <div class="toolbar" style="margin-bottom:16px">
         <div class="filter-chip active" id="crm-f-todos" onclick="setCrmFilter('todos')">Todos</div>
@@ -2443,17 +2454,73 @@ function renderClientes() {
     (c.mascota||'').toLowerCase().includes(crmSearch)
   );
 
-  // Alerts banner
+  // ── Alertas banner (clientes ya vencidos) ──
   const alertas = campClientes.filter(c => !c.optOut && crmStatus(c) === 'alerta');
   const alertDiv = document.getElementById('crm-alerts');
   if (alertas.length) {
     alertDiv.style.display = 'block';
     document.getElementById('crm-alerts-list').innerHTML = alertas.map(c => {
       const dias = diasDesde(crmData[c.id]?.ultimaCompra || c.creado);
-      return `<span style="background:white;border:1px solid var(--red);border-radius:99px;padding:4px 12px;font-size:12px;color:var(--red);cursor:pointer" onclick="abrirCrmEdit('${c.id}')">${c.nombre} · ${c.mascota} · ${dias}d sin comprar</span>`;
+      return `<span style="background:white;border:1px solid var(--red);border-radius:99px;padding:4px 12px;font-size:12px;color:var(--red);cursor:pointer" onclick="abrirRegistrarCompra('${c.id}')">${c.nombre} · ${dias}d sin comprar</span>`;
     }).join('');
   } else alertDiv.style.display = 'none';
 
+  // ── Lista "A contactar esta semana" ──
+  // Clientes cuya próxima compra cae en los próximos 7 días (o ya venció)
+  const hoy = new Date();
+  const contactar = campClientes
+    .filter(c => !c.optOut)
+    .map(c => {
+      const crm = crmData[c.id] || {};
+      const ultima = crm.ultimaCompra || c.creado?.substring(0,10);
+      if (!ultima) return null;
+      const freq = crm.frecuencia || 30;
+      const ultimaDate = new Date(ultima + 'T00:00:00');
+      const proximaDate = new Date(ultimaDate);
+      proximaDate.setDate(proximaDate.getDate() + freq);
+      const diasParaProxima = Math.floor((proximaDate - hoy) / 86400000);
+      return { c, crm, diasParaProxima, proxima: proximaDate.toISOString().split('T')[0] };
+    })
+    .filter(x => x && x.diasParaProxima <= 7)
+    .sort((a, b) => a.diasParaProxima - b.diasParaProxima);
+
+  const contactarEl = document.getElementById('crm-contactar-lista');
+  const contactarCount = document.getElementById('crm-contactar-count');
+  if (contactar.length) {
+    contactarCount.textContent = contactar.length + ' cliente' + (contactar.length!==1?'s':'');
+    contactarEl.innerHTML = contactar.map(({c, crm, diasParaProxima, proxima}) => {
+      const tel = (c.tel||'').replace(/\D/g,'');
+      let urgencia, urgColor, urgBg;
+      if (diasParaProxima < 0) {
+        urgencia = `Venció hace ${Math.abs(diasParaProxima)}d`;
+        urgColor = 'var(--red)'; urgBg = 'var(--red-soft)';
+      } else if (diasParaProxima === 0) {
+        urgencia = '¡Hoy!';
+        urgColor = 'var(--red)'; urgBg = 'var(--red-soft)';
+      } else {
+        urgencia = `En ${diasParaProxima}d (${proxima})`;
+        urgColor = diasParaProxima <= 3 ? 'var(--gold)' : 'var(--green)';
+        urgBg = diasParaProxima <= 3 ? 'var(--gold-soft)' : 'var(--green-soft)';
+      }
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap">
+        <div style="flex:1;min-width:160px">
+          <div style="font-weight:600;font-size:13px">${c.nombre} · <span style="color:var(--text2)">${c.mascota}</span></div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px">${crm.productoPrincipal || '—'}</div>
+        </div>
+        <div style="background:${urgBg};color:${urgColor};font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;white-space:nowrap">${urgencia}</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm" style="font-size:11px" onclick="abrirRegistrarCompra('${c.id}')">🛒 Registrar</button>
+          ${tel ? `<a href="https://wa.me/${tel}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:11px;text-decoration:none">💬 WA</a>` : ''}
+          ${!c.optOut ? `<button class="btn btn-ghost btn-sm" style="font-size:11px" onclick="quickEmail('${c.id}')">📧</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    contactarCount.textContent = 'ninguno esta semana';
+    contactarEl.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--text3);text-align:center">✅ Ningún cliente por contactar esta semana</div>';
+  }
+
+  // ── Grid de cards ──
   const grid = document.getElementById('crm-grid');
   if (!list.length) {
     grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;padding:40px"><div class="empty-icon">🐾</div><div class="empty-msg">Sin clientes</div></div>`;
@@ -2467,35 +2534,52 @@ function renderClientes() {
     const dias = diasDesde(crm.ultimaCompra || c.creado);
     const freq = crm.frecuencia || 30;
     const diasLabel = dias !== null ? `${dias}d` : '—';
-    const statusColors = { alerta: 'var(--red)', activo: 'var(--green)', vip: 'var(--gold)' };
-    const statusBg = { alerta: 'var(--red-soft)', activo: 'var(--green-soft)', vip: 'var(--gold-soft)' };
+    const statusColors = { alerta: 'var(--red)', activo: 'var(--green)', vip: '#8a6d10' };
+    const statusBg    = { alerta: 'var(--red-soft)', activo: 'var(--green-soft)', vip: 'var(--gold-soft)' };
     const tel = (c.tel||'').replace(/\D/g,'');
+
+    // Próxima compra esperada
+    const ultimaStr = crm.ultimaCompra || c.creado?.substring(0,10);
+    let proximaLabel = '—';
+    let proximaColor = 'var(--text3)';
+    if (ultimaStr) {
+      const ult = new Date(ultimaStr + 'T00:00:00');
+      const prox = new Date(ult); prox.setDate(prox.getDate() + freq);
+      const diff = Math.floor((prox - hoy) / 86400000);
+      if (diff < 0) { proximaLabel = `Venció hace ${Math.abs(diff)}d`; proximaColor = 'var(--red)'; }
+      else if (diff === 0) { proximaLabel = '¡Hoy!'; proximaColor = 'var(--red)'; }
+      else if (diff <= 3) { proximaLabel = `En ${diff}d`; proximaColor = '#8a6d10'; }
+      else { proximaLabel = prox.toISOString().split('T')[0]; proximaColor = 'var(--green)'; }
+    }
 
     return `<div class="crm-card ${status}">
       <div class="crm-dias-badge" style="background:${statusBg[status]};color:${statusColors[status]}">${diasLabel} ${status==='alerta'?'⚠':status==='vip'?'⭐':''}</div>
       <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:10px">
         <div class="crm-avatar" style="background:${statusBg[status]}">${petEmoji(crm.tipoMascota||'perro')}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.nombre}</div>
+          <div style="font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.nombre}</div>
           <div style="font-size:13px;color:var(--text2)">${c.mascota}</div>
           <div style="font-size:11px;color:var(--text3);margin-top:2px">${c.puntos ? c.puntos.toLocaleString('es-CR')+' pts' : '0 pts'}</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;font-size:12px">
-        <div style="background:var(--surface2);border-radius:8px;padding:6px 10px">
-          <div style="color:var(--text3)">Última compra</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;font-size:12px">
+        <div style="background:var(--surface2);border-radius:8px;padding:7px 10px">
+          <div style="color:var(--text3);margin-bottom:2px">Última compra</div>
           <div style="font-weight:600">${crm.ultimaCompra || c.creado?.substring(0,10) || '—'}</div>
         </div>
-        <div style="background:var(--surface2);border-radius:8px;padding:6px 10px">
-          <div style="color:var(--text3)">Frecuencia</div>
-          <div style="font-weight:600">c/ ${freq}d</div>
+        <div style="background:var(--surface2);border-radius:8px;padding:7px 10px">
+          <div style="color:var(--text3);margin-bottom:2px">Próxima esperada</div>
+          <div style="font-weight:600;color:${proximaColor}">${proximaLabel}</div>
         </div>
       </div>
-      ${crm.productoPrincipal ? `<div style="font-size:12px;color:var(--text2);margin-bottom:10px">🛒 ${crm.productoPrincipal}</div>` : ''}
-      ${crm.notas ? `<div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-style:italic">"${crm.notas}"</div>` : ''}
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px" onclick="abrirCrmEdit('${c.id}')">✏️ Editar</button>
-        <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px;background:var(--gold-soft);color:#8a6d10;border-color:var(--gold)" onclick="abrirRegistrarCompra('${c.id}')">🛒 Compra</button>
+      <div style="background:var(--surface2);border-radius:8px;padding:7px 10px;font-size:12px;margin-bottom:8px">
+        <div style="color:var(--text3);margin-bottom:2px">Frecuencia · Producto</div>
+        <div style="font-weight:600">c/${freq}d · ${crm.productoPrincipal || '<span style="color:var(--text3);font-weight:400">Sin registrar</span>'}</div>
+      </div>
+      ${crm.notas ? `<div style="font-size:11px;color:var(--text2);margin-bottom:8px;padding:6px 8px;background:var(--lavender-soft);border-radius:6px;font-style:italic">"${crm.notas}"</div>` : ''}
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px" onclick="abrirCrmEdit('${c.id}')">✏️</button>
+        <button class="btn btn-ghost btn-sm" style="flex:2;font-size:11px;background:var(--gold-soft);color:#8a6d10;border-color:var(--gold)" onclick="abrirRegistrarCompra('${c.id}')">🛒 Compra</button>
         ${tel ? `<a href="https://wa.me/${tel}" target="_blank" class="btn btn-ghost btn-sm" style="flex:1;font-size:11px;text-decoration:none;text-align:center">💬</a>` : ''}
         ${!c.optOut ? `<button class="btn btn-ghost btn-sm" style="flex:1;font-size:11px" onclick="quickEmail('${c.id}')">📧</button>` : ''}
       </div>
