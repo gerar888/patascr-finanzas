@@ -1875,7 +1875,20 @@ function refresh() {
   if (id==='prestamo') renderPrestamo();
   if (id==='reportes') renderReportes();
   if (id==='rentabilidad') { simAutoFill(); simRecalc(); }
-  if (id==='campanas') renderCampanas();
+  if (id==='campanas') {
+    // Si hay selecciones activas, solo actualizar KPIs para no perder el estado
+    if (campSelected.size > 0) {
+      const optIn = campClientes.filter(c => !c.optOut).length;
+      const contacted = Object.keys(contactHistory).length;
+      document.getElementById('camp-total').textContent = campClientes.length;
+      document.getElementById('camp-optin').textContent = optIn;
+      document.getElementById('camp-contacted').textContent = contacted;
+      document.getElementById('camp-selected').textContent = campSelected.size;
+      updateActionBar();
+    } else {
+      renderCampanas();
+    }
+  }
   if (id==='clientes') renderClientes();
   if (id==='promociones') renderPromoSaved();
 }
@@ -2221,7 +2234,7 @@ function renderCampanas() {
     const waLink = telClean ? `<a href="https://wa.me/${telClean.replace('+','')}" target="_blank" style="color:var(--green);font-size:12px">💬</a>` : '—';
     const optBadge = c.optOut ? '<span class="badge badge-red" style="font-size:10px">opt-out</span>' : '';
     return `<tr>
-      <td><input type="checkbox" ${checked?'checked':''} ${c.optOut?'disabled title="opt-out"':''} onchange="toggleClient('${c.id}',this.checked)" style="width:16px;height:16px;cursor:pointer"></td>
+      <td><input type="checkbox" data-cid="${c.id}" ${checked?'checked':''} ${c.optOut?'disabled title="opt-out"':''} onchange="toggleClient('${c.id}',this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:#542581"></td>
       <td><strong>${c.nombre}</strong> ${optBadge}</td>
       <td>${c.mascota}</td>
       <td style="font-size:12px;color:var(--text2)">${c.email}</td>
@@ -2242,14 +2255,21 @@ function setCampSearch(v) { campSearch = v.toLowerCase(); renderCampanas(); }
 function toggleClient(id, checked) {
   if (checked) campSelected.add(id);
   else campSelected.delete(id);
+  // Sync "select all" checkbox state
+  const allCbs = document.querySelectorAll('#camp-tbody input[type=checkbox]:not(:disabled)');
+  const allChecked = [...allCbs].every(cb => campSelected.has(cb.dataset.cid));
+  const selAll = document.getElementById('camp-select-all');
+  if (selAll) selAll.checked = allCbs.length > 0 && allChecked;
   document.getElementById('camp-selected').textContent = campSelected.size;
   updateActionBar();
 }
 
 function toggleSelectAll(checked) {
+  // Use data-cid — no fragile regex
   const rows = document.querySelectorAll('#camp-tbody input[type=checkbox]:not(:disabled)');
   rows.forEach(cb => {
-    const id = cb.closest('tr').querySelector('input').getAttribute('onchange').match(/'([^']+)'/)[1];
+    const id = cb.dataset.cid;
+    if (!id) return;
     cb.checked = checked;
     if (checked) campSelected.add(id);
     else campSelected.delete(id);
